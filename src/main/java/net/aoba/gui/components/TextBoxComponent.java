@@ -36,6 +36,8 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 	private boolean isFocused = false;
 	private int caretTick = 0;
 	private boolean caretVisible = true;
+	private boolean isAllSelected = false;
+	private int backspaceDelayTimer = 0;
 
 	private final RectangleComponent box;
 	private final StringComponent textComponent;
@@ -67,7 +69,7 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 		bindProperty(UIElement.BackgroundProperty, GuiManager.componentBackgroundColor);
 		bindProperty(UIElement.BorderProperty, GuiManager.componentBorderColor);
 		bindProperty(UIElement.CornerRadiusProperty, GuiManager.roundingRadius);
-		
+
 		box = new RectangleComponent();
 		box.setProperty(UIElement.PaddingProperty, new Thickness(4f));
 
@@ -100,9 +102,31 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 				caretVisible = !caretVisible;
 				caretTick = 0;
 			}
+
+			// Handle continuous backspace deletion when held down
+			long windowHandle = AobaClient.MC.getWindow().handle();
+			if (GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_BACKSPACE) == GLFW.GLFW_PRESS) {
+				backspaceDelayTimer++;
+				// Initial delay threshold of 15 ticks, then repeats every 2 ticks
+				if (backspaceDelayTimer > 15 && (backspaceDelayTimer - 15) % 2 == 0) {
+					String currentText = getProperty(TextProperty);
+					if (currentText == null) currentText = "";
+
+					if (isAllSelected) {
+						setProperty(TextProperty, "");
+						isAllSelected = false;
+					} else if (!currentText.isEmpty()) {
+						setProperty(TextProperty, currentText.substring(0, currentText.length() - 1));
+					}
+				}
+			} else {
+				backspaceDelayTimer = 0;
+			}
 		} else {
 			caretVisible = false;
 			caretTick = 0;
+			backspaceDelayTimer = 0;
+			isAllSelected = false;
 		}
 	}
 
@@ -116,8 +140,12 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			float textWidth = textComponent.getPreferredSize().width();
 			float textHeight = textComponent.getPreferredSize().height();
 
-			float caretX = textX + textWidth;
-			renderer.drawBox(caretX, textY, 2, textHeight, CARET_SHADER);
+			if (isAllSelected) {
+				renderer.drawBox(textX, textY + textHeight - 2, textWidth, 2, CARET_SHADER);
+			} else {
+				float caretX = textX + textWidth;
+				renderer.drawBox(caretX, textY, 2, textHeight, CARET_SHADER);
+			}
 		}
 	}
 
@@ -140,31 +168,76 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			caretTick = 0;
 
 			int key = event.GetKey();
+			long windowHandle = AobaClient.MC.getWindow().handle();
+			boolean ctrlDown = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
+					|| GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
+
+			// Handle CTRL Modifiers
+			if (ctrlDown) {
+				if (key == GLFW.GLFW_KEY_A) {
+					isAllSelected = true;
+					event.cancel();
+					return;
+				} else if (key == GLFW.GLFW_KEY_C) {
+					String currentText = getProperty(TextProperty);
+					if (currentText != null && !currentText.isEmpty()) {
+						GLFW.glfwSetClipboardString(windowHandle, currentText);
+					}
+					event.cancel();
+					return;
+				} else if (key == GLFW.GLFW_KEY_V) {
+					String clipboard = GLFW.glfwGetClipboardString(windowHandle);
+					if (clipboard != null) {
+						if (isAllSelected) {
+							setProperty(TextProperty, clipboard);
+							isAllSelected = false;
+						} else {
+							String currentText = getProperty(TextProperty);
+							setProperty(TextProperty, (currentText == null ? "" : currentText) + clipboard);
+						}
+					}
+					event.cancel();
+					return;
+				}
+			}
+
 			String currentText = getProperty(TextProperty);
+			if (currentText == null) currentText = "";
 
 			if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_ESCAPE) {
 				setListeningForKey(false);
 			} else if (key == GLFW.GLFW_KEY_BACKSPACE) {
-				if (!currentText.isEmpty()) {
+				if (isAllSelected) {
+					setProperty(TextProperty, "");
+					isAllSelected = false;
+				} else if (!currentText.isEmpty()) {
 					setProperty(TextProperty, currentText.substring(0, currentText.length() - 1));
 				}
 			} else if (key == GLFW.GLFW_KEY_SPACE) {
-				setProperty(TextProperty, currentText + ' ');
+				if (isAllSelected) {
+					setProperty(TextProperty, " ");
+					isAllSelected = false;
+				} else {
+					setProperty(TextProperty, currentText + ' ');
+				}
 			} else if (keyIsValid(key)) {
 				String keyName = GLFW.glfwGetKeyName(key, event.GetScanCode());
 				if (keyName != null && !keyName.isEmpty()) {
 					char keyCode = keyName.charAt(0);
 
-					boolean shiftDown = GLFW.glfwGetKey(AobaClient.MC.getWindow().handle(),
-							GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-							|| GLFW.glfwGetKey(AobaClient.MC.getWindow().handle(),
-									GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+					boolean shiftDown = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+							|| GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
 					if (shiftDown)
 						keyCode = Character.toUpperCase(keyCode);
 					else
 						keyCode = Character.toLowerCase(keyCode);
 
-					setProperty(TextProperty, currentText + keyCode);
+					if (isAllSelected) {
+						setProperty(TextProperty, String.valueOf(keyCode));
+						isAllSelected = false;
+					} else {
+						setProperty(TextProperty, currentText + keyCode);
+					}
 				}
 			}
 
@@ -184,7 +257,7 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			textComponent.clearProperty(UIElement.ForegroundProperty);
 		}
 	}
-	
+
 	private boolean keyIsValid(int key) {
 		return key == 45 || (key >= 48 && key <= 57) || (key >= 65 && key <= 90) || (key >= 97 && key <= 122);
 	}
@@ -201,6 +274,7 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			caretTick = 0;
 			Aoba.getInstance().eventManager.AddListener(KeyDownListener.class, this);
 		} else {
+			isAllSelected = false;
 			GuiManager.clearFocus(this);
 			Aoba.getInstance().eventManager.RemoveListener(KeyDownListener.class, this);
 		}
@@ -212,6 +286,7 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 		if (listeningForKey) {
 			listeningForKey = false;
 			isFocused = false;
+			isAllSelected = false;
 			Aoba.getInstance().eventManager.RemoveListener(KeyDownListener.class, this);
 			refreshDisplayedText();
 		}
