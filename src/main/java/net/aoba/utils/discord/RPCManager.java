@@ -37,22 +37,20 @@ public class RPCManager {
         if (!started) {
             started = true;
             DiscordEventHandlers handlers = new DiscordEventHandlers();
-            rpc.Discord_Initialize("1268367396134191136", handlers, true, "");
+            rpc.Discord_Initialize("1458901547126751252", handlers, true, "");
             presence.startTimestamp = (System.currentTimeMillis() / 1000L);
             presence.largeImageText = "v" + AobaClient.AOBA_VERSION;
             rpc.Discord_UpdatePresence(presence);
-
-            thread = Thread.ofVirtual().name("TH-RPC-Handler").start(() -> {
+            //here is a new thing to stop the problem in mac about LSRegisterURL
+            thread = new Thread(() -> {
                 while (!Thread.currentThread().isInterrupted()) {
                     rpc.Discord_RunCallbacks();
 
                     presence.details = getDetails();
-
                     presence.state = "v" + AobaClient.AOBA_VERSION + " | MC 26.2";
 
                     presence.smallImageText = "logged as - " + MC.getUser().getName();
                     presence.smallImageKey = "https://minotar.net/helm/" + MC.getUser().getName() + "/100.png";
-
 
                     presence.button_label_1 = "Download";
                     presence.button_url_1 = "https://github.com/coltonk9043/Aoba-MC-Hacked-Client";
@@ -63,9 +61,12 @@ public class RPCManager {
                     try {
                         Thread.sleep(2000L);
                     } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
                     }
                 }
-            });
+            }, "TH-RPC-Handler");
+
+            thread.start();
         }
     }
 
@@ -81,7 +82,6 @@ public class RPCManager {
             }
 
             rpc.Discord_Shutdown();
-
             thread = null;
         }
     }
