@@ -40,7 +40,7 @@ import net.minecraft.resources.Identifier;
 
 public class FontManager {
 	private static final String BUILTIN_FONT_PATH = "/assets/aoba/fonts/";
-	private static final String[] BUILTIN_FONT_IDS = { "lato_regular", "helvetica" };
+	private static final String[] BUILTIN_FONT_IDS = { "lato_regular", "helvetica", "fingerpaint" };
 	public static final String DEFAULT_FONT = "lato_regular";
 
 	public static final int WEIGHT_THIN = 100;

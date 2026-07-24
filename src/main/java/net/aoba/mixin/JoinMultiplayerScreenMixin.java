@@ -18,6 +18,7 @@
 
 package net.aoba.mixin;
 
+import net.aoba.gui.screens.ProtocolScreen;
 import net.aoba.gui.screens.alts.AltScreen;
 import net.aoba.gui.screens.proxy.ProxyScreen;
 import net.minecraft.client.gui.components.Button;
@@ -37,6 +38,8 @@ public class JoinMultiplayerScreenMixin extends Screen {
     private Button altManagerButton;
     @Unique
     private Button proxyManagerButton;
+    @Unique
+    private Button protocolButton; //new protocol button
 
     protected JoinMultiplayerScreenMixin(Component title) {
         super(title);
@@ -51,6 +54,10 @@ public class JoinMultiplayerScreenMixin extends Screen {
         proxyManagerButton = Button.builder(Component.nullToEmpty("Proxy Manager"), b -> minecraft.gui.setScreen(new ProxyScreen((JoinMultiplayerScreen) (Object) this)))
                 .bounds(width / 2 - 154, 5, 85, 20).build();
         addRenderableWidget(proxyManagerButton);
+        
+        protocolButton = Button.builder(Component.nullToEmpty("Protocol"), b -> minecraft.setScreen(new ProtocolScreen(this)))
+                .bounds(width / 2 + 154, height - 28, 74, 20).build();
+        addRenderableWidget(protocolButton);
     }
 
     @Inject(at = {@At("TAIL")}, method = {"repositionElements()V"})
@@ -61,6 +68,9 @@ public class JoinMultiplayerScreenMixin extends Screen {
         if (proxyManagerButton != null) {
             proxyManagerButton.setX(width / 2 - 154);
         }
+        if (protocolButton != null) {
+            protocolButton.setX(width / 2 + 154);
+            protocolButton.setY(height - 28);
+        }
     }
-
 }
