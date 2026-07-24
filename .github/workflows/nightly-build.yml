@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       game_version:
-        description: "Minecraft game version (e.g. 26.1.2)"
+        description: "Minecraft game version (e.g. 26.2)"
         required: false
         default: ""
       force_build:
@@ -16,7 +16,7 @@ on:
         default: false
 
 env:
-  GAME_VERSION: "26.1.2"
+  GAME_VERSION: "26.2"
 
 concurrency:
   group: "weekly"
