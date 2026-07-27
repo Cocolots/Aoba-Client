@@ -60,7 +60,7 @@ Check out how Aoba Client looks in action:
 
 ### 📦 Addons  
 
-Take your Aoba Client experience to the next level by creating and integrating custom addons! Use the [Addon Template](https://github.com/cvs0/Aoba-Addon-Template) by [cvs0](https://github.com/cvs0) to develop your own modules and features.  
+Take your Aoba Client experience to the next level by creating and integrating custom addons! Use the [Addon Template]([https://github.com/cvs0/Aoba-Addon-Template](https://github.com/Cocolots/Aoba-Addon-Template)) to develop your own modules and features.  
 
 ---
 
