@@ -97,6 +97,7 @@ public class ModuleManager implements KeyDownListener {
 	public AntiCactus anticactus = new AntiCactus();
 	public AntiInvis antiinvis = new AntiInvis();
 	public AntiKnockback antiknockback = new AntiKnockback();
+	public AutoBreed autobreed = new AutoBreed();
 	public AutoCooldown autocooldown = new AutoCooldown();
 	public AutoAnchor autoanchor = new AutoAnchor();
 	public AutoCrystal autocrystal = new AutoCrystal();

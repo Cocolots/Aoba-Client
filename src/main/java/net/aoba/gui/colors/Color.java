@@ -154,7 +154,7 @@ public final class Color {
 	}
 
 	public String getColorAsHex() {
-		return String.format("#%06X", getColorAsInt());
+		return String.format("#%08X", getColorAsInt());
 	}
 
 	public float getRed() {

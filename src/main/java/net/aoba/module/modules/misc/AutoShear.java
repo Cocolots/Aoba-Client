@@ -20,20 +20,23 @@ import net.aoba.settings.types.BooleanSetting;
 import net.aoba.settings.types.EnumSetting;
 import net.aoba.settings.types.FloatSetting;
 import net.aoba.utils.FindItemResult;
+import net.aoba.utils.entity.BodyPart;
+import net.aoba.utils.entity.EntityUtils;
+import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 
 public class AutoShear extends Module implements TickListener {
 
 	private final FloatSetting radius = FloatSetting.builder().id("autoshear_radius").displayName("Radius")
-			.description("Radius that AutoShear will trigger on Mobs.").defaultValue(5f).minValue(0.1f).maxValue(10f)
+			.description("Radius that AutoShear will trigger on Mobs.").defaultValue(3f).minValue(0.1f).maxValue(10f)
 			.step(0.1f).build();
 
-	private final BooleanSetting legit = BooleanSetting.builder().id("autoshear_legit").displayName("Legit")
+	private final BooleanSetting useRaycast = BooleanSetting.builder().id("autoshear_use_raycast")
+			.displayName("Use Raycast")
 			.description("Whether a raycast will be used to ensure that AutoShear will only shear visible sheep.")
 			.defaultValue(false).build();
 
@@ -53,6 +56,8 @@ public class AutoShear extends Module implements TickListener {
 			.displayName("Pitch Rotation Jitter").description("The randomness of the player's pitch").defaultValue(0.0f)
 			.minValue(0.0f).maxValue(10.0f).step(0.1f).build();
 
+	private EntityGoal currentGoal;
+
 	public AutoShear() {
 		super("AutoShear");
 
@@ -60,7 +65,7 @@ public class AutoShear extends Module implements TickListener {
 		setDescription("Automatically shears Sheep that are near you.");
 
 		addSetting(radius);
-		addSetting(legit);
+		addSetting(useRaycast);
 		addSetting(rotationMode);
 		addSetting(maxRotation);
 		addSetting(yawRandomness);
@@ -70,6 +75,7 @@ public class AutoShear extends Module implements TickListener {
 	@Override
 	public void onDisable() {
 		Aoba.getInstance().eventManager.RemoveListener(TickListener.class, this);
+		reset();
 	}
 
 	@Override
@@ -90,54 +96,63 @@ public class AutoShear extends Module implements TickListener {
 	@Override
 	public void onTick(Post event) {
 		Sheep foundEntity = null;
+		double closestSqr = Double.MAX_VALUE;
+
 		for (Entity entity : Aoba.getInstance().entityManager.getEntities()) {
 			if (!(entity instanceof Sheep sheep))
 				continue;
 
 			// Ensure that the sheap is within a range.
-			if (MC.player.distanceToSqr(entity) > radius.getValueSqr())
+			double distSqr = MC.player.distanceToSqr(entity);
+			if (distSqr > radius.getValueSqr() || distSqr >= closestSqr)
 				continue;
 
 			// Get if the sheep is shearable.
             if (!sheep.readyForShearing() || sheep.isSheared() || sheep.isBaby())
 				continue;
 
+			closestSqr = distSqr;
 			foundEntity = sheep;
-			break;
 		}
 
 		if (foundEntity != null) {
 			// Set the rotation goal to that sheep.
-			EntityGoal rotation = EntityGoal.builder().goal(foundEntity).mode(rotationMode.getValue())
+			currentGoal = EntityGoal.builder().goal(foundEntity).mode(rotationMode.getValue())
 					.maxRotation(maxRotation.getValue()).pitchRandomness(pitchRandomness.getValue())
 					.yawRandomness(yawRandomness.getValue()).build();
-			Aoba.getInstance().rotationManager.setGoal(rotation);
+			Aoba.getInstance().rotationManager.setGoal(currentGoal);
 
 			// Try and find the item slow, and change to it if needed.
 			FindItemResult shearItemSlot = findInHotbar(Items.SHEARS);
 			if (shearItemSlot.found()) {
 				swap(shearItemSlot.slot(), false);
+
 				InteractionHand hand = shearItemSlot.getHand();
+				if (hand == null)
+					return;
 
-				if (legit.getValue()) {
-					HitResult ray = MC.hitResult;
+				EntityHitResult hitResult = useRaycast.getValue()
+						? InteractionUtils.raycastEntity(foundEntity, radius.getValue())
+						: new EntityHitResult(foundEntity,
+								EntityUtils.getBodyPartPosition(foundEntity, BodyPart.CHEST, 1.0f));
+				if (hitResult == null)
+					return;
 
-					if (ray != null && ray.getType() == HitResult.Type.ENTITY) {
-						EntityHitResult entityResult = (EntityHitResult) ray;
-						Entity ent = entityResult.getEntity();
-
-						if (ent == foundEntity) {
-							MC.player.swing(InteractionHand.MAIN_HAND);
-							MC.gameMode.interact(MC.player, foundEntity,entityResult, hand);
-                        }
-					}
-				} else {
-					MC.player.swing(InteractionHand.MAIN_HAND);
-					MC.gameMode.interact(MC.player, foundEntity, new EntityHitResult(foundEntity), hand);
-                }
+				MC.player.swing(hand);
+				MC.gameMode.interact(MC.player, foundEntity, hitResult, hand);
 			}
 		} else
 			// No entity found, reset the rotation goal.
+			reset();
+	}
+
+	private void reset() {
+		if (currentGoal == null)
+			return;
+
+		if (Aoba.getInstance().rotationManager.getGoal() == currentGoal)
 			Aoba.getInstance().rotationManager.setGoal(null);
+
+		currentGoal = null;
 	}
 }

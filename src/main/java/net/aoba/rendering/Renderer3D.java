@@ -11,8 +11,10 @@ package net.aoba.rendering;
 import static net.aoba.AobaClient.MC;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -51,6 +53,7 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -71,7 +74,11 @@ public class Renderer3D extends AbstractRenderer {
 	private int offscreenWidth, offscreenHeight;
 
 	private PoseStack matrixStack;
+	private PoseStack currentPoseStack = new PoseStack();
+	private final ModelCapturingCollector modelCollector = new ModelCapturingCollector();
+	private final Set<Class<?>> excludedModels = new HashSet<>();
 	private Camera camera;
+	private CameraRenderState cameraState;
 	private Frustum frustum;
 	private DeltaTracker deltaTracker;
 
@@ -83,10 +90,12 @@ public class Renderer3D extends AbstractRenderer {
 	/**
 	 * Sets the per-frame context.
 	 */
-	public void beginFrame(PoseStack matrixStack, Frustum frustum, Camera camera, DeltaTracker deltaTracker) {
+	public void beginFrame(PoseStack matrixStack, Frustum frustum, Camera camera, CameraRenderState cameraState,
+			DeltaTracker deltaTracker) {
 		this.matrixStack = matrixStack;
 		this.frustum = frustum;
 		this.camera = camera;
+		this.cameraState = cameraState;
 		this.deltaTracker = deltaTracker;
 	}
 
@@ -186,6 +195,22 @@ public class Renderer3D extends AbstractRenderer {
 		edge(currentBuilder, matrix4f, camera, x1, y1, z1, x2, y2, z2, thickness);
 	}
 
+	private EntityModel<LivingEntityRenderState> getEntityModel(
+			LivingEntityRenderer<LivingEntity, LivingEntityRenderState, EntityModel<LivingEntityRenderState>> renderer,
+			LivingEntityRenderState renderState) {
+
+		Class<?> rendererClass = renderer.getClass();
+		if (!excludedModels.contains(rendererClass)) {
+			try {
+				renderer.submit(renderState, currentPoseStack, modelCollector, cameraState);
+			} catch (Throwable throwable) {
+				excludedModels.add(rendererClass);
+				currentPoseStack = new PoseStack();
+			}
+		}
+		return renderer.getModel();
+	}
+
 	@SuppressWarnings("unchecked")
 	public void drawEntityModel(Entity entity, Shader shader) {
 		ensureBatch(shader);
@@ -196,9 +221,8 @@ public class Renderer3D extends AbstractRenderer {
 			matrixStack.pushPose();
 
 			LivingEntityRenderer<LivingEntity, LivingEntityRenderState, EntityModel<LivingEntityRenderState>> leRenderer = (LivingEntityRenderer<LivingEntity, LivingEntityRenderState, EntityModel<LivingEntityRenderState>>) renderer;
-			EntityModel<LivingEntityRenderState> model = leRenderer.getModel();
 			LivingEntityRenderState renderState = leRenderer.createRenderState(livingEntity, partialTicks);
-			renderState.isBaby = livingEntity.isBaby();
+			EntityModel<LivingEntityRenderState> model = getEntityModel(leRenderer, renderState);
 			model.setupAnim(renderState);
 			Direction sleepDirection = livingEntity.getBedOrientation();
 

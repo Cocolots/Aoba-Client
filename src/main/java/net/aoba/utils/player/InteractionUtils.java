@@ -1,5 +1,7 @@
 package net.aoba.utils.player;
 
+import java.util.function.Predicate;
+
 import net.aoba.Aoba;
 import net.aoba.event.events.StartAttackEvent;
 import net.minecraft.client.Minecraft;
@@ -11,12 +13,15 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -47,6 +52,25 @@ public class InteractionUtils {
 		if (ray.getDirection() != face)
 			return null;
 		return ray;
+	}
+
+	public static EntityHitResult raycastEntity(Entity target, double reach) {
+		return raycastEntity(entity -> entity == target, reach);
+	}
+
+	public static EntityHitResult raycastEntity(Predicate<Entity> filter, double reach) {
+		Vec3 eye = MC.player.getEyePosition();
+		Vec3 lookVector = MC.player.getViewVector(1.0f);
+		Vec3 end = eye.add(lookVector.scale(reach));
+
+		BlockHitResult blockHit = MC.level
+				.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, MC.player));
+		if (blockHit.getType() != HitResult.Type.MISS)
+			end = blockHit.getLocation();
+
+		AABB hitcastSearchBox = MC.player.getBoundingBox().expandTowards(lookVector.scale(reach)).inflate(1.0);
+		return ProjectileUtil.getEntityHitResult(MC.player, eye, end, hitcastSearchBox, filter,
+				eye.distanceToSqr(end));
 	}
 
 	/**

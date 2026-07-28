@@ -64,7 +64,8 @@
     "LevelRendererMixin",
     "AbstractContainerScreenMixin",
     "AbstractHorseMixin",
-    "ClientChunkCacheMixin"
+    "ClientChunkCacheMixin",
+	"AnimalMixin"
   ],
   "injectors": {
     "defaultRequire": 1

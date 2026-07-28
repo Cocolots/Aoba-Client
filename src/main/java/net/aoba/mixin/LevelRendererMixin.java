@@ -63,7 +63,7 @@ public class LevelRendererMixin {
 		Frustum cullFrustum = cameraState.cullFrustum;
 
 		Renderer3D renderer = aoba.render3D;
-		renderer.beginFrame(matrixStack, cullFrustum, camera, deltaTracker);
+		renderer.beginFrame(matrixStack, cullFrustum, camera, cameraState, deltaTracker);
 		aoba.eventManager.Fire(new Render3DEvent(renderer));
 		renderer.render();
 
