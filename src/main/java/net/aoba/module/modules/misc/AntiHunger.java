@@ -60,7 +60,11 @@ public class AntiHunger extends Module implements SendPacketListener, SendMoveme
 		Aoba.getInstance().eventManager.AddListener(SendPacketListener.class, this);
 		Aoba.getInstance().eventManager.AddListener(SendMovementPacketListener.class, this);
 
-		lastOnGround = MC.player.onGround();
+		if(MC.player != null) {
+			lastOnGround = MC.player.onGround();
+		}else {
+			lastOnGround = false;
+		}
 	}
 
 	@Override
