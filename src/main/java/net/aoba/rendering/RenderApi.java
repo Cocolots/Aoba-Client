@@ -2,8 +2,8 @@ package net.aoba.rendering;
 
 import java.util.Locale;
 
-import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.device.GpuDevice;
 
 import net.aoba.AobaClient;
 

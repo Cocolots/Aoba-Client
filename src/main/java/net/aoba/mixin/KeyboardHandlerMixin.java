@@ -25,7 +25,7 @@ import net.aoba.event.events.KeyUpEvent;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -41,12 +41,12 @@ public class KeyboardHandlerMixin {
         AobaClient aoba = Aoba.getInstance();
 
         int key = keyEvent.key();
-        int scancode = keyEvent.scancode();
+        int keycode = keyEvent.keycode();
         int modifiers = keyEvent.modifiers();
 
-        if (action == GLFW.GLFW_PRESS) {
+        if (action == InputConstants.PRESS) {
             if (aoba != null && aoba.eventManager != null) {
-                KeyDownEvent event = new KeyDownEvent(window, key, scancode, action, modifiers);
+                KeyDownEvent event = new KeyDownEvent(window, key, keycode, action, modifiers);
 
                 Aoba.getInstance().eventManager.Fire(event);
 
@@ -56,13 +56,13 @@ public class KeyboardHandlerMixin {
             }
 
             if (MC.gui.screen() == null && MC.gui.overlay() == null && !aoba.guiManager.isClickGuiOpen()) {
-                if (key == GLFW.GLFW_KEY_PERIOD) {
+                if (key == InputConstants.KEY_PERIOD) {
                     MC.gui.setScreen(new ChatScreen("", false));
                 }
             }
-        } else if (action == GLFW.GLFW_RELEASE) {
+        } else if (action == InputConstants.RELEASE) {
             if (aoba != null && aoba.eventManager != null) {
-                KeyUpEvent event = new KeyUpEvent(window, key, scancode, action, modifiers);
+                KeyUpEvent event = new KeyUpEvent(window, key, keycode, action, modifiers);
 
                 Aoba.getInstance().eventManager.Fire(event);
 

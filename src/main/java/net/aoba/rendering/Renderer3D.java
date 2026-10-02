@@ -23,25 +23,25 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
-import com.mojang.blaze3d.IndexType;
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.IndexType;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.renderpearl.api.textures.GpuTexture;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.aoba.Aoba;
 import net.aoba.rendering.shaders.Shader;
@@ -246,7 +246,7 @@ public class Renderer3D extends AbstractRenderer {
 			}
 
 			if (!livingEntity.hasPose(Pose.SLEEPING)) {
-				matrixStack.mulPose(Axis.YP.rotationDegrees(180.0f - interpolatedBodyYaw));
+				matrixStack.rotateDegrees(Axis.YP, 180.0f - interpolatedBodyYaw);
 			}
 
 			if (livingEntity.deathTime > 0) {
@@ -254,15 +254,15 @@ public class Renderer3D extends AbstractRenderer {
 				if (dyingAngle > 1.0f) {
 					dyingAngle = 1.0f;
 				}
-				matrixStack.mulPose(Axis.ZP.rotationDegrees(dyingAngle * 90f));
+				matrixStack.rotateDegrees(Axis.ZP, dyingAngle * 90f);
 			} else if (livingEntity.isAutoSpinAttack()) {
-				matrixStack.mulPose(Axis.XP.rotationDegrees(-90.0f - livingEntity.getXRot()));
-				matrixStack.mulPose(Axis.YP.rotationDegrees((livingEntity.tickCount + partialTicks) * -75.0f));
+				matrixStack.rotateDegrees(Axis.XP, -90.0f - livingEntity.getXRot());
+				matrixStack.rotateDegrees(Axis.YP, (livingEntity.tickCount + partialTicks) * -75.0f);
 			} else if (livingEntity.hasPose(Pose.SLEEPING)) {
 				float sleepAngle = sleepDirection != null ? getYaw(sleepDirection) : interpolatedBodyYaw;
-				matrixStack.mulPose(Axis.YP.rotationDegrees(sleepAngle));
-				matrixStack.mulPose(Axis.ZP.rotationDegrees(90.0f));
-				matrixStack.mulPose(Axis.YP.rotationDegrees(270.0f));
+				matrixStack.rotateDegrees(Axis.YP, sleepAngle);
+				matrixStack.rotateDegrees(Axis.ZP, 90.0f);
+				matrixStack.rotateDegrees(Axis.YP, 270.0f);
 			}
 
 			matrixStack.scale(-1.0f, -1.0f, 1.0f);
@@ -356,9 +356,9 @@ public class Renderer3D extends AbstractRenderer {
 
 				for (int i = 0; i < batchCount; i++) {
 					DrawBatch batch = pendingBatches.get(i);
-					pass.setPipeline(batch.shader.pipeline3D());
+					pass.setPipeline(RenderSystem.getCompiledPipeline(batch.shader.pipeline3D()));
 					pass.setUniform("AobaShaderParams", paramSlices.get(i));
-					pass.bindTexture("Sampler0", getWhiteTextureView(), getWhiteSampler());
+					pass.setUniform("Sampler0", getWhiteTextureView(), getWhiteSampler());
 					pass.drawIndexed(batch.mesh.drawState().indexCount(), 1, 0, offsets[i] / vertexSize, 0);
 				}
 			}

@@ -20,7 +20,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
-import net.minecraft.util.Util;
+import com.mojang.blaze3d.Blaze3D;
 
 public class AddonScreen extends Screen {
 	protected static final AobaPanorama AOBA_ROTATING_PANORAMA_RENDERER = new AobaPanorama();
@@ -45,7 +45,7 @@ public class AddonScreen extends Screen {
 		// Left Side
 		Path addonsPath = Minecraft.getInstance().getResourcePackDirectory().getParent().resolve("mods");
 		addRenderableWidget(Button
-				.builder(Component.nullToEmpty("Open Addons Folder"), button -> Util.getPlatform().openPath(addonsPath))
+				.builder(Component.nullToEmpty("Open Addons Folder"), button -> Blaze3D.openPath(addonsPath))
 				.bounds(16, height - 40, 120, 20).build());
 
 		addRenderableWidget(Button.builder(Component.nullToEmpty("Done"), b -> minecraft.gui.setScreen(parentScreen))

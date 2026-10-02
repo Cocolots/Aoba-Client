@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import com.mojang.logging.LogUtils;
 
@@ -239,7 +239,7 @@ public class ModuleManager implements KeyDownListener {
 	public void onKeyDown(KeyDownEvent event) {
 		if (GuiManager.isKeyboardInputActive())
 			return;
-		if (event.GetKey() == GLFW.GLFW_KEY_UNKNOWN)
+		if (event.GetKey() == InputConstants.UNKNOWN.getValue())
 			return;
 
 		if (MC.gui.screen() == null) {
@@ -248,7 +248,7 @@ public class ModuleManager implements KeyDownListener {
 					continue;
 
 				Key binding = module.getBind().getValue();
-				if (binding.getValue() == GLFW.GLFW_KEY_UNKNOWN)
+				if (binding.getValue() == InputConstants.UNKNOWN.getValue())
 					continue;
 				if (binding.getValue() == event.GetKey()) {
 					module.toggle();

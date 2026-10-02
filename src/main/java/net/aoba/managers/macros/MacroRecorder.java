@@ -10,7 +10,7 @@ package net.aoba.managers.macros;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.aoba.Aoba;
 import net.aoba.event.events.KeyDownEvent;
 import net.aoba.event.events.KeyUpEvent;
@@ -70,9 +70,9 @@ public class MacroRecorder
 
 			// Set the macro to release all keys currently pressed at the end.
 			for (int key : heldKeys)
-				currentMacro.add(new KeyClickMacroEvent(timeStamp, key, 0, GLFW.GLFW_RELEASE, 0));
+				currentMacro.add(new KeyClickMacroEvent(timeStamp, key, 0, InputConstants.RELEASE, 0));
 			for (int button : heldMouseButtons)
-				currentMacro.add(new MouseClickMacroEvent(timeStamp, button, GLFW.GLFW_RELEASE, 0));
+				currentMacro.add(new MouseClickMacroEvent(timeStamp, button, InputConstants.RELEASE, 0));
 			heldKeys.clear();
 			heldMouseButtons.clear();
 
@@ -117,7 +117,7 @@ public class MacroRecorder
 				&& !Aoba.getInstance().guiManager.isClickGuiOpen()) {
 			heldKeys.remove(Integer.valueOf(event.GetKey()));
 			long timeStamp = System.nanoTime() - startTime;
-			currentMacro.add(new KeyClickMacroEvent(timeStamp, event.GetKey(), event.GetScanCode(), event.GetAction(),
+			currentMacro.add(new KeyClickMacroEvent(timeStamp, event.GetKey(), event.GetKeyCode(), event.GetAction(),
 					event.GetModifiers()));
 		}
 	}
@@ -129,7 +129,7 @@ public class MacroRecorder
 				&& !Aoba.getInstance().guiManager.isClickGuiOpen()) {
 			heldKeys.add(event.GetKey());
 			long timeStamp = System.nanoTime() - startTime;
-			currentMacro.add(new KeyClickMacroEvent(timeStamp, event.GetKey(), event.GetScanCode(), event.GetAction(),
+			currentMacro.add(new KeyClickMacroEvent(timeStamp, event.GetKey(), event.GetKeyCode(), event.GetAction(),
 					event.GetModifiers()));
 		}
 	}
@@ -162,9 +162,9 @@ public class MacroRecorder
 	@Override
 	public void onMouseClick(MouseClickEvent mouseClickEvent) {
 		if (!Aoba.getInstance().guiManager.isClickGuiOpen()) {
-			if (mouseClickEvent.action == GLFW.GLFW_PRESS)
+			if (mouseClickEvent.action == InputConstants.PRESS)
 				heldMouseButtons.add(mouseClickEvent.button);
-			else if (mouseClickEvent.action == GLFW.GLFW_RELEASE)
+			else if (mouseClickEvent.action == InputConstants.RELEASE)
 				heldMouseButtons.remove(Integer.valueOf(mouseClickEvent.button));
 			long timeStamp = System.nanoTime() - startTime;
 			currentMacro.add(new MouseClickMacroEvent(timeStamp, mouseClickEvent.button, mouseClickEvent.action,

@@ -9,7 +9,6 @@ import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -109,7 +108,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
 			Aoba.getInstance().render2D.drawStringWithScale(stack.getHoverName().getString(), offsetX + 10, offsetY - 10,
 					Shader.solid(Colors.White), 1.0f, aobaFont);
 
-			extractRenderState(context, compoundTag.allItemsCopyStream().toList(), offsetX, offsetY + nameHeight, mouseX, mouseY, colors);
+			extractRenderState(context, compoundTag.itemCopies().toList(), offsetX, offsetY + nameHeight, mouseX, mouseY, colors);
 
 			context.fill(offsetX, offsetY - nameHeight, offsetX + tooltipWidth, offsetY,
 					new Color(0, 0, 0, 128).getRGB());
@@ -129,7 +128,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
 				() -> "Aoba Depth Clear",
 				MC.gameRenderer.mainRenderTarget().getColorTextureView(),
 				Optional.empty(),
-				MC.gameRenderer.mainRenderTarget().useDepth ? MC.gameRenderer.mainRenderTarget().getDepthTextureView() : null,
+				MC.gameRenderer.mainRenderTarget().hasDepth() ? MC.gameRenderer.mainRenderTarget().getDepthTextureView() : null,
 				OptionalDouble.of(1.0))) {
 		}
 

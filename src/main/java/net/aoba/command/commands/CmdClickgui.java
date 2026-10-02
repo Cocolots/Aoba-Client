@@ -26,7 +26,7 @@ public class CmdClickgui extends Command {
                 if (parameters.length != 2)
                     throw new InvalidSyntaxException(this);
                 char keybind = Character.toUpperCase(parameters[1].charAt(0));
-                Aoba.getInstance().guiManager.clickGuiButton.setValue(InputConstants.Type.KEYSYM.getOrCreate((int) keybind));
+                Aoba.getInstance().guiManager.clickGuiButton.setValue(InputConstants.Type.KEYBOARD.getOrCreate((int) keybind));
                 break;
             case "open":
                 Aoba.getInstance().guiManager.setClickGuiOpen(true);

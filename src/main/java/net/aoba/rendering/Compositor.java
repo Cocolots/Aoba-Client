@@ -7,24 +7,24 @@ import java.util.OptionalInt;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 
-import com.mojang.blaze3d.IndexType;
-import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.ProjectionType;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuSampler;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.IndexType;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
@@ -103,14 +103,14 @@ public final class Compositor implements AutoCloseable {
 
 			try (RenderPass pass = encoder.createRenderPass(() -> "Aoba Composite",
 					mc.gameRenderer.mainRenderTarget().getColorTextureView(), Optional.empty(),
-					mc.gameRenderer.mainRenderTarget().useDepth ? mc.gameRenderer.mainRenderTarget().getDepthTextureView() : null,
+					mc.gameRenderer.mainRenderTarget().hasDepth() ? mc.gameRenderer.mainRenderTarget().getDepthTextureView() : null,
 					OptionalDouble.empty())) {
 
 				RenderSystem.bindDefaultUniforms(pass);
 				pass.setUniform("DynamicTransforms", transforms);
-				pass.setPipeline(PIPELINE);
+				pass.setPipeline(RenderSystem.getCompiledPipeline(PIPELINE));
 				pass.setVertexBuffer(0, gpuBuf.slice());
-				pass.bindTexture("Sampler0", textureView, sampler);
+				pass.setUniform("Sampler0", textureView, sampler);
 				pass.disableScissor();
 				pass.setIndexBuffer(idxBuffer, idxType);
 				pass.drawIndexed(6, 1, 0, 0, 0);

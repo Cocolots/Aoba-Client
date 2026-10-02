@@ -28,7 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -53,10 +53,6 @@ public class Surround extends Module implements TickListener {
 			.displayName("Auto-Disable").description("Disables the module when the blocks have finished placing.")
 			.defaultValue(false).build();
 
-	private final BooleanSetting legit = BooleanSetting.builder().id("surround_legit").displayName("Legit")
-			.description("Whether or not to simulate a player looking and clicking to place.").defaultValue(false)
-			.build();
-
 	private static final List<Block> BREAKABLE_BLOCKS = Lists.newArrayList(Blocks.TALL_GRASS, Blocks.FERN,
 			Blocks.LARGE_FERN, Blocks.DEAD_BUSH, Blocks.VINE, Blocks.WHEAT, Blocks.CARROTS, Blocks.POTATOES,
 			Blocks.BEETROOTS);
@@ -70,7 +66,6 @@ public class Surround extends Module implements TickListener {
 		addSetting(blocks);
 		addSetting(alignCharacter);
 		addSetting(autoDisable);
-		addSetting(legit);
 
 		setDetectable(AntiCheat.Vulcan, AntiCheat.AdvancedAntiCheat, AntiCheat.Verus, AntiCheat.Grim, AntiCheat.Matrix,
 				AntiCheat.Negativity, AntiCheat.Karhu);
@@ -108,13 +103,10 @@ public class Surround extends Module implements TickListener {
 		return -1;
 	}
 
-	private void breakBlock(BlockPos pos, InteractionHand hand) {
+	private void breakBlock(BlockPos pos) {
 		MC.gameMode.startDestroyBlock(pos, Direction.UP);
-		if (legit.getValue()) {
-			MC.player.swing(hand);
-		} else {
-			MC.player.connection.send(new ServerboundSwingPacket(hand));
-		}
+		MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+		MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
 	}
 
 	@Override
@@ -143,10 +135,10 @@ public class Surround extends Module implements TickListener {
 					newPos.west());
 			for (BlockPos pos : placePositions) {
 				if (MC.level.getBlockState(pos).canBeReplaced()) {
-					InteractionUtils.placeBlock(pos, hand, true);
+					InteractionUtils.placeBlock(pos, hand);
 				} else if (BREAKABLE_BLOCKS.contains(MC.level.getBlockState(pos).getBlock())) {
-					breakBlock(pos, hand);
-					InteractionUtils.placeBlock(pos, hand, true);
+					breakBlock(pos);
+					InteractionUtils.placeBlock(pos, hand);
 				}
 			}
 		}

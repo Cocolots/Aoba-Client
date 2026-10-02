@@ -1,7 +1,7 @@
 package net.aoba.gui.components;
 
 import java.util.function.Consumer;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.aoba.Aoba;
 import net.aoba.AobaClient;
 import net.aoba.event.events.KeyDownEvent;
@@ -104,8 +104,7 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			}
 
 			// Handle continuous backspace deletion when held down
-			long windowHandle = AobaClient.MC.getWindow().handle();
-			if (GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_BACKSPACE) == GLFW.GLFW_PRESS) {
+			if (InputConstants.isKeyDown(InputConstants.KEY_BACKSPACE)) {
 				backspaceDelayTimer++;
 				// Initial delay threshold of 15 ticks, then repeats every 2 ticks
 				if (backspaceDelayTimer > 15 && (backspaceDelayTimer - 15) % 2 == 0) {
@@ -168,25 +167,24 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			caretTick = 0;
 
 			int key = event.GetKey();
-			long windowHandle = AobaClient.MC.getWindow().handle();
-			boolean ctrlDown = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
-					|| GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
+			boolean ctrlDown = InputConstants.isKeyDown(InputConstants.KEY_LCONTROL)
+					|| InputConstants.isKeyDown(InputConstants.KEY_RCONTROL);
 
 			// Handle CTRL Modifiers
 			if (ctrlDown) {
-				if (key == GLFW.GLFW_KEY_A) {
+				if (key == InputConstants.KEY_A) {
 					isAllSelected = true;
 					event.cancel();
 					return;
-				} else if (key == GLFW.GLFW_KEY_C) {
+				} else if (key == InputConstants.KEY_C) {
 					String currentText = getProperty(TextProperty);
 					if (currentText != null && !currentText.isEmpty()) {
-						GLFW.glfwSetClipboardString(windowHandle, currentText);
+						AobaClient.MC.keyboardHandler.setClipboard(currentText);
 					}
 					event.cancel();
 					return;
-				} else if (key == GLFW.GLFW_KEY_V) {
-					String clipboard = GLFW.glfwGetClipboardString(windowHandle);
+				} else if (key == InputConstants.KEY_V) {
+					String clipboard = AobaClient.MC.keyboardHandler.getClipboard();
 					if (clipboard != null) {
 						if (isAllSelected) {
 							setProperty(TextProperty, clipboard);
@@ -204,40 +202,37 @@ public class TextBoxComponent extends Component implements KeyDownListener {
 			String currentText = getProperty(TextProperty);
 			if (currentText == null) currentText = "";
 
-			if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_ESCAPE) {
+			if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_ESCAPE) {
 				setListeningForKey(false);
-			} else if (key == GLFW.GLFW_KEY_BACKSPACE) {
+			} else if (key == InputConstants.KEY_BACKSPACE) {
 				if (isAllSelected) {
 					setProperty(TextProperty, "");
 					isAllSelected = false;
 				} else if (!currentText.isEmpty()) {
 					setProperty(TextProperty, currentText.substring(0, currentText.length() - 1));
 				}
-			} else if (key == GLFW.GLFW_KEY_SPACE) {
+			} else if (key == InputConstants.KEY_SPACE) {
 				if (isAllSelected) {
 					setProperty(TextProperty, " ");
 					isAllSelected = false;
 				} else {
 					setProperty(TextProperty, currentText + ' ');
 				}
-			} else if (keyIsValid(key)) {
-				String keyName = GLFW.glfwGetKeyName(key, event.GetScanCode());
-				if (keyName != null && !keyName.isEmpty()) {
-					char keyCode = keyName.charAt(0);
+			} else if (keyIsValid(event.GetKeyCode())) {
+				char keyCode = (char) event.GetKeyCode();
 
-					boolean shiftDown = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-							|| GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-					if (shiftDown)
-						keyCode = Character.toUpperCase(keyCode);
-					else
-						keyCode = Character.toLowerCase(keyCode);
+				boolean shiftDown = InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+						|| InputConstants.isKeyDown(InputConstants.KEY_RSHIFT);
+				if (shiftDown)
+					keyCode = Character.toUpperCase(keyCode);
+				else
+					keyCode = Character.toLowerCase(keyCode);
 
-					if (isAllSelected) {
-						setProperty(TextProperty, String.valueOf(keyCode));
-						isAllSelected = false;
-					} else {
-						setProperty(TextProperty, currentText + keyCode);
-					}
+				if (isAllSelected) {
+					setProperty(TextProperty, String.valueOf(keyCode));
+					isAllSelected = false;
+				} else {
+					setProperty(TextProperty, currentText + keyCode);
 				}
 			}
 

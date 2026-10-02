@@ -105,7 +105,7 @@ public class MacroManager implements KeyDownListener {
 			while ((flag = in.readByte()) != FLAG_TERMINATOR) {
 				switch (flag) {
 					case FLAG_LOOPING -> looping = true;
-					case FLAG_KEYBIND -> keybind = InputConstants.Type.KEYSYM.getOrCreate(in.readInt());
+					case FLAG_KEYBIND -> keybind = InputConstants.Type.KEYBOARD.getOrCreate(in.readInt());
 					default -> {}
 				}
 			}

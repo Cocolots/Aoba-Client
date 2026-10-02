@@ -58,16 +58,16 @@ public class GuiMove extends Module implements TickListener {
 			float deltaX = 0;
 			float deltaY = 0;
 
-			if (isKeyPressed(264))
+			if (isKeyPressed(InputConstants.KEY_DOWN))
 				deltaY += 10f;
 
-			if (isKeyPressed(265))
+			if (isKeyPressed(InputConstants.KEY_UP))
 				deltaY -= 10f;
 
-			if (isKeyPressed(262))
+			if (isKeyPressed(InputConstants.KEY_RIGHT))
 				deltaX += 10f;
 
-			if (isKeyPressed(263))
+			if (isKeyPressed(InputConstants.KEY_LEFT))
 				deltaX -= 10f;
 
 			if (deltaX != 0 || deltaY != 0)

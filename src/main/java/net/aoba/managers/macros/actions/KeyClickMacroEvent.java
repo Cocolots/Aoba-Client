@@ -18,18 +18,18 @@ import net.minecraft.client.input.KeyEvent;
 public class KeyClickMacroEvent extends MacroEvent {
 
 	private int button = 0;
-	private int scancode = 0;
+	private int keycode = 0;
 	private int action= 0;
 	private int mods= 0;
-	
+
 	public KeyClickMacroEvent() {
-		
+
 	}
-	
-	public KeyClickMacroEvent(long timestamp, int button, int scancode, int action, int mods) {
+
+	public KeyClickMacroEvent(long timestamp, int button, int keycode, int action, int mods) {
 		super(timestamp);
 		this.button = button;
-		this.scancode = scancode;
+		this.keycode = keycode;
 		this.action = action;
 		this.mods = mods;
 	}
@@ -38,7 +38,7 @@ public class KeyClickMacroEvent extends MacroEvent {
 	public void write(DataOutputStream fs) throws IOException {
 		super.write(fs);
 		fs.writeInt(button);
-		fs.writeInt(scancode);
+		fs.writeInt(keycode);
 		fs.writeInt(action);
 		fs.writeInt(mods);
 	}
@@ -47,7 +47,7 @@ public class KeyClickMacroEvent extends MacroEvent {
 	public void read(DataInputStream in) throws IOException {
 		super.read(in);
 		button = in.readInt();
-		scancode = in.readInt();
+		keycode = in.readInt();
 		action = in.readInt();
 		mods = in.readInt();
 	}
@@ -62,7 +62,7 @@ public class KeyClickMacroEvent extends MacroEvent {
 
 	@Override
 	public void execute() {
-		KeyEvent keyEvent = new KeyEvent(button, scancode, mods);
+		KeyEvent keyEvent = new KeyEvent(button, keycode, mods);
 		((IKeyboardHandler) MC.keyboardHandler).invokeKeyPress(MC.getWindow().handle(), action, keyEvent);
 	}
 }

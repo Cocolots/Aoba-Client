@@ -11,8 +11,7 @@ package net.aoba.managers.macros;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Queue;
-import java.util.Set;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.aoba.Aoba;
 import net.aoba.managers.macros.actions.KeyClickMacroEvent;
 import net.aoba.managers.macros.actions.MacroEvent;
@@ -84,12 +83,12 @@ public class MacroPlayer {
 
 			for (int key : keys) {
 				KeyEvent keyEvent = new KeyEvent(key, 0, 0);
-				((IKeyboardHandler) MC.keyboardHandler).invokeKeyPress(window, GLFW.GLFW_RELEASE, keyEvent);
+				((IKeyboardHandler) MC.keyboardHandler).invokeKeyPress(window, InputConstants.RELEASE, keyEvent);
 			}
 
 			for (int button : buttons) {
 				MouseButtonInfo buttonInfo = new MouseButtonInfo(button, 0);
-				((IMouseHandler) MC.mouseHandler).executeOnMouseButton(window, buttonInfo, GLFW.GLFW_RELEASE);
+				((IMouseHandler) MC.mouseHandler).executeOnMouseButton(window, buttonInfo, InputConstants.RELEASE);
 			}
 		}
 		

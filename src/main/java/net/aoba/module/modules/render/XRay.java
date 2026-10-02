@@ -13,7 +13,6 @@ import java.util.HashSet;
 import net.aoba.settings.types.BooleanSetting;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import org.lwjgl.glfw.GLFW;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -38,7 +37,7 @@ public class XRay extends Module {
 			.onUpdate(this::ReloadRenderer).build();
 
 	public XRay() {
-		super("XRay", InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_X));
+		super("XRay", InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_X));
 		setCategory(Category.of("Render"));
 		setDescription("Allows the player to see ores.");
 		addSetting(blocks);

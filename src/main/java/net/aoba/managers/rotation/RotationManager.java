@@ -22,7 +22,6 @@ import net.aoba.event.listeners.TickListener;
 import net.aoba.managers.rotation.goals.EasingFunction;
 import net.aoba.managers.rotation.goals.Goal;
 import net.aoba.mixin.interfaces.ILocalPlayer;
-import net.aoba.mixin.interfaces.IServerboundUseItemPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -199,10 +198,9 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		if (serverYaw == null || serverPitch == null)
 			return;
 
-		if (event.GetPacket() instanceof ServerboundUseItemPacket packet) {
-			IServerboundUseItemPacket accessor = (IServerboundUseItemPacket) packet;
-			accessor.setYRot(serverYaw);
-			accessor.setXRot(serverPitch);
+		if (event.GetPacket() instanceof ServerboundUseItemPacket packet
+				&& (packet.yRot() != serverYaw || packet.xRot() != serverPitch)) {
+			event.SetPacket(new ServerboundUseItemPacket(packet.hand(), packet.sequence(), serverYaw, serverPitch));
 		}
 	}
 

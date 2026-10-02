@@ -3,7 +3,7 @@
 	"id": "aoba",
 	"version": "1.0.0",
 	"name": "Aoba Client",
-	"description": "A Minecraft Fabric 26.2.x utility mod.",
+	"description": "A Minecraft Fabric 26.3.x utility mod.",
 	"authors": [
 		"Cocolots"
 	],
@@ -27,8 +27,8 @@
 	],
 	"accessWidener" : "aoba.accesswidener",
 	"depends": {
-		"fabricloader": ">=0.19.3",
-		"minecraft": "~26.2",
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
 		"java": ">=25",
 		"fabric-api": "*"
 	}

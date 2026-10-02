@@ -6,10 +6,11 @@ import net.aoba.event.listeners.StartAttackListener;
 import net.aoba.module.Category;
 import net.aoba.module.Module;
 import net.aoba.utils.FindItemResult;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.AxeItem;
 
 public class ShieldBreaker extends Module implements StartAttackListener {
 	public ShieldBreaker() {
@@ -44,14 +45,15 @@ public class ShieldBreaker extends Module implements StartAttackListener {
 		// Ensure that target HAS a shield and is currently blocking.
 		if(target instanceof LivingEntity livingTarget) {
 			if(livingTarget.isBlocking()) {
-				FindItemResult findItemResult = findInHotbar(s -> s.getItem() instanceof AxeItem);
+				FindItemResult findItemResult = findInHotbar(s -> s.is(ItemTags.AXES));
 				if (findItemResult.found() && swap(findItemResult.slot(), true)) {
 					event.cancel();
 
 					// Note: we do not want to use InteractionUtils.attack() here
 					// Doing so will infinitely bubble the onStartAttack event.
 					MC.gameMode.attack(MC.player, target);
-					MC.player.swing(InteractionHand.MAIN_HAND);
+					MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+					MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
 
 					swapBack();
 				}

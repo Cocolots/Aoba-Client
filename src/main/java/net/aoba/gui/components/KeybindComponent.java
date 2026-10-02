@@ -10,7 +10,6 @@ package net.aoba.gui.components;
 
 import java.util.function.Consumer;
 
-import org.lwjgl.glfw.GLFW;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import net.aoba.event.events.KeyDownEvent;
@@ -91,19 +90,18 @@ public class KeybindComponent extends Component implements KeyDownListener {
 	
 	private String getKeyDisplayText() {
 		Key keybind = getProperty(SelectedKeyProperty);
-		String text = keybind.getDisplayName().getString();
-		if (text.equals("scancode.0") || text.equals("key.keyboard.0"))
+		if (keybind == null || keybind.equals(InputConstants.UNKNOWN))
 			return "N/A";
-		return text;
+		return keybind.getDisplayName().getString();
 	}
 
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
 		if (listeningForKey) {
-			Key key = event.GetKey() == GLFW.GLFW_KEY_ESCAPE
+			Key key = event.GetKey() == InputConstants.KEY_ESCAPE
 					? InputConstants.UNKNOWN
-					: InputConstants.Type.KEYSYM.getOrCreate(event.GetKey());
+					: InputConstants.Type.KEYBOARD.getOrCreate(event.GetKey());
 
 			setProperty(SelectedKeyProperty, key);
 			setListeningForKey(false);

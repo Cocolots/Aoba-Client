@@ -10,7 +10,7 @@ package net.aoba.gui.navigation.huds;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.aoba.AobaClient;
 import net.aoba.gui.GuiManager;
 import net.aoba.gui.UIElement;
@@ -55,10 +55,10 @@ public class ModuleSelectorHud extends HudWindow {
 
 		resizeMode = ResizeMode.Width;
 
-		keybindUp = new KeyMapping("key.tabup", GLFW.GLFW_KEY_UP, AobaClient.AOBA_CATEGORY);
-		keybindDown = new KeyMapping("key.tabdown", GLFW.GLFW_KEY_DOWN, AobaClient.AOBA_CATEGORY);
-		keybindLeft = new KeyMapping("key.tableft", GLFW.GLFW_KEY_LEFT, AobaClient.AOBA_CATEGORY);
-		keybindRight = new KeyMapping("key.tabright", GLFW.GLFW_KEY_RIGHT, AobaClient.AOBA_CATEGORY);
+		keybindUp = new KeyMapping("key.tabup", InputConstants.KEY_UP, AobaClient.AOBA_CATEGORY);
+		keybindDown = new KeyMapping("key.tabdown", InputConstants.KEY_DOWN, AobaClient.AOBA_CATEGORY);
+		keybindLeft = new KeyMapping("key.tableft", InputConstants.KEY_LEFT, AobaClient.AOBA_CATEGORY);
+		keybindRight = new KeyMapping("key.tabright", InputConstants.KEY_RIGHT, AobaClient.AOBA_CATEGORY);
 	}
 
 	@Override

@@ -76,8 +76,8 @@ public class MouseHandlerMixin {
 		}
 	}
 
-	@Inject(at = { @At("HEAD") }, method = { "onMove(JDD)V" }, cancellable = true)
-	private void onCursorPos(long window, double x, double y, CallbackInfo ci) {
+	@Inject(at = { @At("HEAD") }, method = { "onMove(JDDDD)V" }, cancellable = true)
+	private void onCursorPos(long window, double x, double y, double xrel, double yrel, CallbackInfo ci) {
 		AobaClient aoba = Aoba.getInstance();
 		if (aoba != null && aoba.eventManager != null) {
 			double cursorDeltaX = x - this.xpos;

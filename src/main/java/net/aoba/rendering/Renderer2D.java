@@ -18,25 +18,25 @@ import java.util.Objects;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
 import org.lwjgl.system.MemoryUtil;
-import com.mojang.blaze3d.IndexType;
-import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.ProjectionType;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.IndexType;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.renderpearl.api.textures.GpuTexture;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 import net.aoba.Aoba;
 import net.aoba.gui.types.Rectangle;
 import net.aoba.rendering.msaa.IAAHandler;
@@ -643,7 +643,7 @@ public class Renderer2D extends AbstractRenderer {
 			pass.setUniform("DynamicTransforms", transforms);
 
 			for (DrawCmd draw : draws) {
-				pass.setPipeline(draw.shader.pipeline());
+				pass.setPipeline(RenderSystem.getCompiledPipeline(draw.shader.pipeline()));
 				pass.setVertexBuffer(0, draw.vertexBuffer.slice());
 
 				if (draw.scissor != null) {
@@ -653,12 +653,12 @@ public class Renderer2D extends AbstractRenderer {
 				}
 
 				if (draw.shader.needsGameFramebuffer() && gameSnapshotTextureView != null) {
-					pass.bindTexture("Sampler0", gameSnapshotTextureView,
+					pass.setUniform("Sampler0", gameSnapshotTextureView,
 							RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
 				} else if (draw.textureView != null) {
-					pass.bindTexture("Sampler0", draw.textureView, draw.sampler);
+					pass.setUniform("Sampler0", draw.textureView, draw.sampler);
 				} else {
-					pass.bindTexture("Sampler0", getWhiteTextureView(), getWhiteSampler());
+					pass.setUniform("Sampler0", getWhiteTextureView(), getWhiteSampler());
 				}
 
 				pass.setUniform("AobaShaderParams", draw.shaderParamsSlice);

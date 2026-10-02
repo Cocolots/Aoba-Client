@@ -8,7 +8,8 @@
 
 package net.aoba.utils.input;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.cursor.CursorType;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 
 public enum CursorStyle {
     Default,
@@ -17,22 +18,13 @@ public enum CursorStyle {
 	HorizonalResize,
 	VerticalResize;
 
-    private boolean created;
-    private long cursor;
-
-    public long getGlfwCursor() {
-        if (!created) {
-            switch (this) {
-                case Click -> cursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_HAND_CURSOR);
-                case Type -> cursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_IBEAM_CURSOR);
-                case HorizonalResize -> cursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_HRESIZE_CURSOR);
-                case VerticalResize -> cursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_VRESIZE_CURSOR);
-                case Default -> cursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_ARROW_CURSOR);
-            }
-
-            created = true;
-        }
-
-        return cursor;
+    public CursorType getCursorType() {
+        return switch (this) {
+            case Click -> CursorTypes.POINTING_HAND;
+            case Type -> CursorTypes.IBEAM;
+            case HorizonalResize -> CursorTypes.RESIZE_EW;
+            case VerticalResize -> CursorTypes.RESIZE_NS;
+            case Default -> CursorTypes.ARROW;
+        };
     }
 }

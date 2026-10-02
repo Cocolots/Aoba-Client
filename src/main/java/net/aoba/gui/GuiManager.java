@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.lwjgl.glfw.GLFW;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.aoba.Aoba;
@@ -96,11 +95,11 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	private static final Minecraft MC = Minecraft.getInstance();
 	
 	public KeybindSetting clickGuiButton = KeybindSetting.builder().id("key.clickgui").displayName("ClickGUI Key")
-			.defaultValue(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_RIGHT_SHIFT)).build();
+			.defaultValue(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_RSHIFT)).build();
 	
 	private static CursorStyle currentCursor = CursorStyle.Default;
 	private static String tooltip = null;
-	private final KeyMapping esc = new KeyMapping("key.esc", GLFW.GLFW_KEY_ESCAPE, AobaClient.AOBA_CATEGORY);
+	private final KeyMapping esc = new KeyMapping("key.esc", InputConstants.KEY_ESCAPE, AobaClient.AOBA_CATEGORY);
 
 	private boolean clickGuiOpen = false;
 	private static boolean isKeyboardInputActive = false;

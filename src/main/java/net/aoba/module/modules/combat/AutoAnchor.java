@@ -32,6 +32,8 @@ import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -401,8 +403,11 @@ public class AutoAnchor extends Module implements TickListener, Render3DListener
 		if (autoSwitch.getValue())
 			swap(result.slot(), false);
 
-		MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
-		MC.player.swing(InteractionHand.MAIN_HAND);
+		SwingAnimation swingAnimation = MC.player.getMainHandItem().getInteractAnimation();
+		InteractionResult useResult = MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
+		if (useResult instanceof InteractionResult.Success success
+				&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+			MC.player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
 
 		displayedBoxes.put(targetPos, System.currentTimeMillis());
 		return true;
@@ -542,7 +547,7 @@ public class AutoAnchor extends Module implements TickListener, Render3DListener
 					Direction placementFace = null;
 					for (Direction d : Direction.values()) {
 						BlockPos neighbor = anchorPos.relative(d);
-						if (!MC.level.getBlockState(neighbor).blocksMotion())
+						if (!MC.level.getBlockState(neighbor).isSolid())
 							continue;
 						if (d == Direction.DOWN) {
 							placementBlockPos = neighbor;
@@ -623,8 +628,11 @@ public class AutoAnchor extends Module implements TickListener, Render3DListener
 		if (autoSwitch.getValue())
 			swap(glowstone.slot(), false);
 
-		MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
-		MC.player.swing(InteractionHand.MAIN_HAND);
+		SwingAnimation swingAnimation = MC.player.getMainHandItem().getInteractAnimation();
+		InteractionResult useResult = MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
+		if (useResult instanceof InteractionResult.Success success
+				&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+			MC.player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
 		return true;
 	}
 
@@ -669,7 +677,7 @@ public class AutoAnchor extends Module implements TickListener, Render3DListener
 			if (neighborState.is(Blocks.RESPAWN_ANCHOR))
 				continue;
 
-			if (neighborState.blocksMotion())
+			if (neighborState.isSolid())
 				return true;
 		}
 		return false;
@@ -720,7 +728,7 @@ public class AutoAnchor extends Module implements TickListener, Render3DListener
 			BlockState neighborState = MC.level.getBlockState(neighbor);
 			if (neighborState.is(Blocks.RESPAWN_ANCHOR))
 				continue;
-			if (!neighborState.blocksMotion())
+			if (!neighborState.isSolid())
 				continue;
 			if (d == Direction.DOWN) {
 				placementPos = neighbor;
@@ -770,8 +778,11 @@ public class AutoAnchor extends Module implements TickListener, Render3DListener
 		if (autoSwitch.getValue())
 			swap(glowstone.slot(), false);
 
-		MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
-		MC.player.swing(InteractionHand.MAIN_HAND);
+		SwingAnimation swingAnimation = MC.player.getMainHandItem().getInteractAnimation();
+		InteractionResult useResult = MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
+		if (useResult instanceof InteractionResult.Success success
+				&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+			MC.player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
 		displayedBoxes.put(shieldPos, System.currentTimeMillis());
 		return true;
 	}

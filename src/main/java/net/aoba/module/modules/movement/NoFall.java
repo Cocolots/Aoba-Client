@@ -25,6 +25,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
@@ -133,10 +134,13 @@ public class NoFall extends Module implements TickListener, SendPacketListener {
 				MC.player.setYRot((float) newRotation.yaw());
 				MC.player.setXRot((float) newRotation.pitch());
 
+				SwingAnimation swingAnimation = MC.player.getMainHandItem().getInteractAnimation();
 				InteractionResult actionResult = MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, result);
 
 				if (actionResult.consumesAction()) {
-					MC.player.swing(InteractionHand.MAIN_HAND);
+					if (actionResult instanceof InteractionResult.Success success
+							&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+						MC.player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
 					MC.gameMode.useItem(MC.player, InteractionHand.MAIN_HAND);
 				}
 			}
@@ -153,7 +157,7 @@ public class NoFall extends Module implements TickListener, SendPacketListener {
 			BlockPos blockPos = MC.player.blockPosition().offset(0, -i, 0);
 			BlockState state = MC.level.getBlockState(blockPos);
 
-			if (state.blocksMotion())
+			if (state.isSolid())
 				break;
 
 			Fluid fluid = state.getFluidState().getType();

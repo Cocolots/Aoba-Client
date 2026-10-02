@@ -35,6 +35,8 @@ import net.aoba.utils.entity.EntityUtils;
 import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.phys.EntityHitResult;
@@ -182,8 +184,10 @@ public class AutoBreed extends Module implements TickListener, Render3DListener,
 			return;
 
 		// Feed animal
-		MC.player.swing(hand);
-		MC.gameMode.interact(MC.player, foundEntity, hitResult, hand);
+		SwingAnimation swingAnimation = MC.player.getItemInHand(hand).getInteractAnimation();
+		if (MC.gameMode.interact(MC.player, foundEntity, hitResult, hand) instanceof InteractionResult.Success success
+				&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+			MC.player.swing(hand, swingAnimation, false);
 		entityTimerMap.put(foundEntity.getId(), now);
 	}
 

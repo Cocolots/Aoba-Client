@@ -23,6 +23,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -81,7 +82,7 @@ public class AutoFarm extends Module implements TickListener {
 					BlockState blockState = MC.level.getBlockState(mutableBlockPos);
 
 					if (block instanceof CropBlock crop) {
-						if (!crop.isBonemealSuccess(MC.level, null, mutableBlockPos, blockState)) {
+						if (!crop.isBonemealSuccess(MC.level, null, mutableBlockPos, blockState, BonemealSource.INTERACTION)) {
 							InteractionManager.destroyBlock(mutableBlockPos);
 						} else {
 							fertilizeCrops(mutableBlockPos);

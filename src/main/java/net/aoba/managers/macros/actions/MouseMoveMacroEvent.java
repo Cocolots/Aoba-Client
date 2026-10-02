@@ -48,7 +48,7 @@ public class MouseMoveMacroEvent extends MacroEvent {
 		MouseHandler mouse = MC.mouseHandler;
 		IMouseHandler iMouse = (IMouseHandler)mouse;
 		if(iMouse != null) {
-			iMouse.executeOnCursorPos(MC.getWindow().handle(), x, y);
+			iMouse.executeOnCursorPos(MC.getWindow().handle(), x, y, x - mouse.xpos(), y - mouse.ypos());
 		}
 	}
 }
