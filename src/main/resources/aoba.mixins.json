@@ -13,7 +13,6 @@
     "interfaces.IModelPart",
     "interfaces.IModelPartCube",
     "interfaces.IServerboundMovePlayerPacket",
-    "interfaces.IServerboundUseItemPacket",
     "interfaces.IMouseHandler",
     "interfaces.ILocalPlayer",
     "interfaces.IClientboundBossEventPacket"
@@ -61,6 +60,7 @@
     "SoundEngineMixin",
     "TitleScreenMixin",
     "LevelChunkMixin",
+    "LevelExtractorMixin",
     "LevelRendererMixin",
     "AbstractContainerScreenMixin",
     "AbstractHorseMixin",

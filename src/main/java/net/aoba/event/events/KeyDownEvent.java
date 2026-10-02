@@ -16,14 +16,14 @@ import net.aoba.event.listeners.KeyDownListener;
 public class KeyDownEvent extends AbstractEvent {
 	private final long window;
 	private final int key;
-	private final int scancode;
+	private final int keycode;
 	private final int action;
 	private final int modifiers;
 
-	public KeyDownEvent(long window, int key, int scancode, int action, int modifiers) {
+	public KeyDownEvent(long window, int key, int keycode, int action, int modifiers) {
         this.window = window;
 		this.key = key;
-		this.scancode = scancode;
+		this.keycode = keycode;
 		this.action = action;
 		this.modifiers = modifiers;
 	}
@@ -36,8 +36,8 @@ public class KeyDownEvent extends AbstractEvent {
 		return key;
 	}
 
-	public int GetScanCode() {
-		return scancode;
+	public int GetKeyCode() {
+		return keycode;
 	}
 
 	public int GetAction() {

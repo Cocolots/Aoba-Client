@@ -52,6 +52,9 @@ public class ConnectionMixin {
 
 		if (event.isCancelled()) {
 			ci.cancel();
+		} else if (event.GetPacket() != packet) {
+			ci.cancel();
+			((Connection) (Object) this).send(event.GetPacket());
 		}
 	}
 

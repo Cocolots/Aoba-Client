@@ -114,7 +114,7 @@ public class EntityESP extends Module implements Render3DListener {
 				continue;
 			
 			if (entity instanceof LivingEntity) {
-				if (!MC.getEntityRenderDispatcher().shouldRender(entity, frustum, cameraPosition.x(), cameraPosition.y(), cameraPosition.z()))
+				if (!MC.getEntityRenderDispatcher().shouldRender(entity, frustum, cameraPosition.x(), cameraPosition.y(), cameraPosition.z(), partialTicks))
 					continue;
 
 				Shader effect = getColorForEntity(entity);

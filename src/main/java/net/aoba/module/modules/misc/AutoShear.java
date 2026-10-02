@@ -24,6 +24,8 @@ import net.aoba.utils.entity.BodyPart;
 import net.aoba.utils.entity.EntityUtils;
 import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.item.Items;
@@ -138,8 +140,10 @@ public class AutoShear extends Module implements TickListener {
 				if (hitResult == null)
 					return;
 
-				MC.player.swing(hand);
-				MC.gameMode.interact(MC.player, foundEntity, hitResult, hand);
+				SwingAnimation swingAnimation = MC.player.getItemInHand(hand).getInteractAnimation();
+				if (MC.gameMode.interact(MC.player, foundEntity, hitResult, hand) instanceof InteractionResult.Success success
+						&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+					MC.player.swing(hand, swingAnimation, false);
 			}
 		} else
 			// No entity found, reset the rotation goal.

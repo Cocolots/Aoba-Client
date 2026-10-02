@@ -23,17 +23,13 @@ public record Rotation(double yaw, double pitch) {
 		return new Rotation(Math.toRadians(yaw), Math.toRadians(pitch));
 	}
 
-	public Rotation roundToGCD() {
-		double gcd = RotationManager.getGCD();
-
-		// Round to nearest GCD
-		double g1 = Math.round(yaw / gcd) * gcd;
-		double g2 = Math.round(pitch / gcd) * gcd;
-
-		return new Rotation(g1, Mth.clamp(g2, -90f, 90f));
+	public Rotation stepByGCD(double deltaYaw, double deltaPitch) {
+		float gcd = RotationManager.getGCD();
+		float yawDelta = Math.round((float) deltaYaw / gcd) * gcd;
+		float pitchDelta = Math.round((float) deltaPitch / gcd) * gcd;
+		return new Rotation((float) yaw + yawDelta, Mth.clamp((float) pitch + pitchDelta, -90f, 90f));
 	}
-	
-	
+
 	public boolean equals(Rotation rotation) {
 		if (rotation == null)
 			return false;

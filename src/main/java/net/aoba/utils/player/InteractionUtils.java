@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.AxisDirection;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -16,6 +16,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -78,10 +79,9 @@ public class InteractionUtils {
 	 * 
 	 * @param blockPos  Position to place the block
 	 * @param hand      Hand to use to place.
-	 * @param swingHand Whether to swing the hand
 	 * @return True if the block was placed, false otherwise.
 	 */
-	public static boolean placeBlock(BlockPos blockPos, InteractionHand hand, boolean swingHand) {
+	public static boolean placeBlock(BlockPos blockPos, InteractionHand hand) {
 		Inventory inventory = MC.player.getInventory();
 		ItemStack itemInHand;
 		if (hand == InteractionHand.MAIN_HAND)
@@ -98,7 +98,7 @@ public class InteractionUtils {
 			Vec3 placePos = Vec3.atCenterOf(blockPos).add(side.getStepX() * 0.5, side.getStepY() * 0.5,
 					side.getStepZ() * 0.5);
 			BlockHitResult raytraceResult = new BlockHitResult(placePos, side.getOpposite(), neighbour, false);
-			return interactBlock(raytraceResult, hand, swingHand);
+			return interactBlock(raytraceResult, hand);
 		} else
 			return false;
 	}
@@ -108,16 +108,20 @@ public class InteractionUtils {
 	 * 
 	 * @param blockHitResult Raycast result of the block.
 	 * @param hand           Hand to use.
-	 * @param swingHand      Whether to swing the players hand.
 	 * @return True if the block was interacted with.
 	 */
-	public static boolean interactBlock(BlockHitResult blockHitResult, InteractionHand hand, boolean swingHand) {
+	public static boolean interactBlock(BlockHitResult blockHitResult, InteractionHand hand) {
+		ItemStack heldItem = MC.player.getItemInHand(hand);
+		SwingAnimation swingAnimation = heldItem.getInteractAnimation();
+		int oldCount = heldItem.getCount();
 		InteractionResult result = MC.gameMode.useItemOn(MC.player, hand, blockHitResult);
 		if (result.consumesAction()) {
-			if (swingHand)
-				MC.player.swing(hand);
-			else
-				MC.getConnection().send(new ServerboundSwingPacket(hand));
+			if (result instanceof InteractionResult.Success success
+					&& success.swingSource() == InteractionResult.SwingSource.PREDICTED) {
+				MC.player.swing(hand, swingAnimation, false);
+				if (!heldItem.isEmpty() && (heldItem.getCount() != oldCount || MC.player.hasInfiniteMaterials()))
+					MC.player.itemUsed(hand);
+			}
 			return true;
 		} else
 			return false;
@@ -140,7 +144,8 @@ public class InteractionUtils {
 		}
 
 		MC.gameMode.attack(MC.player, entity);
-		MC.player.swing(InteractionHand.MAIN_HAND);
+		MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+		MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
 	}
 
 	public static Direction getPlaceSide(BlockPos blockPos) {

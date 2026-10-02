@@ -15,14 +15,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.pipeline.BindGroupLayout;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
+import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.UniformType;
 
 import net.aoba.rendering.RenderApi;
 import net.minecraft.client.Minecraft;
@@ -188,7 +188,7 @@ public class ShaderManager {
 						.withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
 						.withUniform("Projection", UniformType.UNIFORM_BUFFER)
 						.withUniform("AobaShaderParams", UniformType.UNIFORM_BUFFER)
-						.withSampler("Sampler0").build())
+						.withUniform("Sampler0", UniformType.COMBINED_IMAGE_SAMPLER).build())
 				.withCull(false)
 				.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT_PREMULTIPLIED_ALPHA))
 				.withVertexBinding(0, DefaultVertexFormat.POSITION_TEX)
@@ -203,7 +203,7 @@ public class ShaderManager {
 						.withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
 						.withUniform("Projection", UniformType.UNIFORM_BUFFER)
 						.withUniform("AobaShaderParams", UniformType.UNIFORM_BUFFER)
-						.withSampler("Sampler0").build())
+						.withUniform("Sampler0", UniformType.COMBINED_IMAGE_SAMPLER).build())
 				.withCull(false)
 				.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT_PREMULTIPLIED_ALPHA))
 				.withVertexBinding(0, DefaultVertexFormat.POSITION_TEX)

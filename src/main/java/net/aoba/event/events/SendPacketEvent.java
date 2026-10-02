@@ -16,7 +16,7 @@ import net.minecraft.network.protocol.Packet;
 
 public class SendPacketEvent extends AbstractEvent {
 
-	private final Packet<?> packet;
+	private Packet<?> packet;
 
 	public SendPacketEvent(Packet<?> packet) {
 		this.packet = packet;
@@ -24,6 +24,10 @@ public class SendPacketEvent extends AbstractEvent {
 
 	public Packet<?> GetPacket() {
 		return packet;
+	}
+
+	public void SetPacket(Packet<?> packet) {
+		this.packet = packet;
 	}
 
 	@Override

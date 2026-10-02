@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 
 import net.aoba.Aoba;
 import net.aoba.AobaClient;

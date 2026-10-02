@@ -1,10 +1,11 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 layout(std140) uniform DynamicTransforms {
     mat4 ModelViewMat;
+    mat4 TextureMat;
     vec4 ColorModulator;
     vec3 ModelOffset;
-    mat4 TextureMat;
 };
 layout(std140) uniform AobaShaderParams {
     vec4 Tint;
@@ -12,9 +13,9 @@ layout(std140) uniform AobaShaderParams {
 
 uniform sampler2D Sampler0;
 
-in vec2 localUV;
+layout(location = 0) in vec2 localUV;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main() {
     vec4 texSample = texture(Sampler0, localUV);

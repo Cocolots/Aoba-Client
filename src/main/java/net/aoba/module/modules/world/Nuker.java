@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.Block;
@@ -141,7 +142,7 @@ public class Nuker extends Module implements Render3DListener, TickListener, Blo
 		if (creative.getValue()) {
 			int range = (int) (Math.floor(radius.getValue()) + 1);
 			Iterable<BlockPos> blocks = BlockPos
-					.withinManhattan(BlockPos.containing(MC.player.position()).above(), range, range, range);
+					.withinManhattan(BlockPos.containing(MC.player.position()).above(), range);
 			for (BlockPos blockPos : blocks) {
 				Block block = MC.level.getBlockState(blockPos).getBlock();
 				if (block == Blocks.AIR || blacklist.getValue().contains(block))
@@ -151,7 +152,8 @@ public class Nuker extends Module implements Render3DListener, TickListener, Blo
 						.send(new ServerboundPlayerActionPacket(Action.START_DESTROY_BLOCK, blockPos, Direction.NORTH));
 				MC.player.connection
 						.send(new ServerboundPlayerActionPacket(Action.STOP_DESTROY_BLOCK, blockPos, Direction.NORTH));
-				MC.player.swing(InteractionHand.MAIN_HAND);
+				MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+				MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
 			}
 		} else {
 			if (currentBlockToBreak == null) {
@@ -170,7 +172,8 @@ public class Nuker extends Module implements Render3DListener, TickListener, Blo
 							currentBlockToBreak, Direction.NORTH));
 					MC.player.connection.send(
 							new ServerboundPlayerActionPacket(Action.STOP_DESTROY_BLOCK, currentBlockToBreak, Direction.NORTH));
-					MC.player.swing(InteractionHand.MAIN_HAND);
+					MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+					MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
 				}
 			}
 		}

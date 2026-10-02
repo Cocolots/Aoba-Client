@@ -328,7 +328,7 @@ public class SettingManager {
 					}
 					case KEYBIND -> {
 						int keyCode = Integer.parseInt(value);
-						setting.setValue(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+						setting.setValue(InputConstants.Type.KEYBOARD.getOrCreate(keyCode));
 					}
 					case RECTANGLE -> {
 						String[] dimensions = value.split(",");

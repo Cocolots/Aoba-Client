@@ -32,6 +32,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.BedBlock;
@@ -189,12 +190,10 @@ public class BedAura extends Module implements Render3DListener, TickListener, B
 						BlockHitResult blockResult = (BlockHitResult) ray;
 
 						if (currentBlockToBreak.equals(blockResult.getBlockPos())) {
-							MC.player.swing(InteractionHand.MAIN_HAND);
 							breakBlock(currentBlockToBreak);
 						}
 					}
 				} else {
-					MC.player.swing(InteractionHand.MAIN_HAND);
 					breakBlock(currentBlockToBreak);
 				}
 			}
@@ -208,7 +207,8 @@ public class BedAura extends Module implements Render3DListener, TickListener, B
 		MC.player.connection
 				.send(new ServerboundPlayerActionPacket(Action.START_DESTROY_BLOCK, pos, Direction.NORTH));
 		MC.player.connection.send(new ServerboundPlayerActionPacket(Action.STOP_DESTROY_BLOCK, pos, Direction.NORTH));
-		MC.player.swing(InteractionHand.MAIN_HAND);
+		MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+		MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
 	}
 
 	@Override

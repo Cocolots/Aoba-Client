@@ -24,7 +24,8 @@ import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
+import java.net.URI;
+import com.mojang.blaze3d.Blaze3D;
 
 public class MainMenuScreen extends Screen {
 	protected static final AobaPanorama AOBA_ROTATING_PANORAMA_RENDERER = new AobaPanorama();
@@ -71,7 +72,7 @@ public class MainMenuScreen extends Screen {
 
 		AobaButtonWidget settingsButton = new AobaButtonWidget(startX + BUTTON_WIDTH + SPACING,
 				startY + BUTTON_HEIGHT + SPACING, BUTTON_WIDTH, BUTTON_HEIGHT, Component.nullToEmpty("Settings"));
-		settingsButton.setPressAction(b -> minecraft.gui.setScreen(new OptionsScreen(this, MC.options, false)));
+		settingsButton.setPressAction(b -> minecraft.gui.setScreen(new OptionsScreen(this, MC.options)));
 		addRenderableWidget(settingsButton);
 
 		AobaButtonWidget addonsButton = new AobaButtonWidget(startX, startY + ((BUTTON_HEIGHT + SPACING) * 2),
@@ -108,7 +109,7 @@ public class MainMenuScreen extends Screen {
 
 		AobaImageButtonWidget discordButton = new AobaImageButtonWidget(width - 60, height - 30, 20, 20,
 				TextureBank.discord);
-		discordButton.setPressAction(b -> Util.getPlatform().openUri("https://discord.gg/CDa4etPFtk"));
+		discordButton.setPressAction(b -> Blaze3D.openUri(URI.create("https://discord.gg/CDa4etPFtk")));
 		addRenderableWidget(discordButton);
 
 	}

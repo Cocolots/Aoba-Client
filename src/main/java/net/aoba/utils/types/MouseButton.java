@@ -8,8 +8,10 @@
 
 package net.aoba.utils.types;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 public class MouseButton {
-	public static final int LEFT = 0;
-	public static final int RIGHT = 1;
-	public static final int MIDDLE = 2;
+	public static final int LEFT = InputConstants.MOUSE_BUTTON_LEFT;
+	public static final int RIGHT = InputConstants.MOUSE_BUTTON_RIGHT;
+	public static final int MIDDLE = InputConstants.MOUSE_BUTTON_MIDDLE;
 }

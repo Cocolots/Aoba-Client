@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
-import org.lwjgl.glfw.GLFW;
 import net.aoba.Aoba;
 import net.aoba.AobaClient;
 import net.aoba.interfaces.IMultiPlayerGameMode;
@@ -56,7 +55,7 @@ public abstract class Module {
 	 * @param name The name to use for this module.
 	 */
 	public Module(String name) {
-		this(name, InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_UNKNOWN));
+		this(name, InputConstants.UNKNOWN);
 	}
 
 	public Module(String name, Key keybind) {
@@ -217,21 +216,16 @@ public abstract class Module {
 	/**
 	 * Checks if a specific key is currently pressed.
 	 *
-	 * @param button The key code of the key to check. A value of -1 indicates an
-	 *               invalid key.
+	 * @param button The scancode of the key to check. A value of 0 or less
+	 *               indicates an invalid key.
 	 * @return {@code true} if the specified key is pressed; {@code false}
-	 *         otherwise. If the button is less than 10 or equals -1, it will return
-	 *         {@code false}.
+	 *         otherwise.
 	 */
 	public boolean isKeyPressed(int button) {
-		if (button == -1)
+		if (button <= 0)
 			return false;
 
-		if (button < 10) // check
-			return false;
-
-		// Updated for 1.21.11 - isKeyDown now takes Window instead of long handle
-		return InputConstants.isKeyDown(MC.getWindow(), button);
+		return InputConstants.isKeyDown(button);
 	}
 
 	/**

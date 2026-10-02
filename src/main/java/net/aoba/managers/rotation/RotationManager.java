@@ -47,9 +47,9 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		AOBA.eventManager.AddListener(SendMovementPacketListener.class, this);
 	}
 
-	public static double getGCD() {
-		double f = MC.options.sensitivity().get() * 0.6 + 0.2;
-		return f * f * f * 1.2;
+	public static float getGCD() {
+		double f = MC.options.sensitivity().get() * 0.6F + 0.2F;
+		return (float) (f * f * f * 8.0) * 0.15F;
 	}
 
 	public Goal<?> getGoal() {
@@ -60,6 +60,14 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		if (goal != null && goal.equals(currentGoal)) {
 			currentGoal = goal;
 			return;
+		}
+
+		boolean isCurrentGoalFake = currentGoal != null && currentGoal.isFakeRotation() && currentGoal.getRotationMode() != RotationMode.NONE;
+		boolean isNextGoalFake = goal != null && goal.isFakeRotation() && goal.getRotationMode() != RotationMode.NONE;
+		if (isCurrentGoalFake && !isNextGoalFake && MC.player != null && serverYaw != null && serverPitch != null) {
+			Rotation aligned = new Rotation(serverYaw, serverPitch).stepByGCD(MC.player.getYRot() - serverYaw, MC.player.getXRot() - serverPitch);
+			MC.player.setYRot((float) aligned.yaw());
+			MC.player.setXRot((float) aligned.pitch());
 		}
 
 		currentGoal = goal;
@@ -100,17 +108,13 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		if (MC.player == null)
 			return;
 
-		if (serverPitch == null)
-			serverPitch = MC.player.getXRot();
+		RotationMode mode = currentGoal == null ? RotationMode.NONE : currentGoal.getRotationMode();
 
-		if (serverYaw == null)
+		if (mode == RotationMode.NONE || !currentGoal.isFakeRotation() || serverYaw == null || serverPitch == null) {
 			serverYaw = MC.player.getYRot();
+			serverPitch = MC.player.getXRot();
+		}
 
-		if (currentGoal == null)
-			return;
-
-		// NONE returns early; no work to be done.
-		RotationMode mode = currentGoal.getRotationMode();
 		if (mode == RotationMode.NONE)
 			return;
 
@@ -148,7 +152,7 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		if (mode == RotationMode.NONE)
 			return null;
 		else if (mode == RotationMode.INSTANT)
-			return goal.roundToGCD().clamp();
+			return playerRotation.stepByGCD(Mth.wrapDegrees(goal.yaw() - playerRotation.yaw()), goal.pitch() - playerRotation.pitch());
 		else {
 			// Set the start goal if the rotation has changed from the last applied rotation.
 			if (!playerRotation.equals(lastAppliedRotation)) {
@@ -184,7 +188,7 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 				deltaPitch *= scale;
 			}
 
-			return new Rotation(playerRotation.yaw() + deltaYaw, playerRotation.pitch() + deltaPitch).roundToGCD();
+			return playerRotation.stepByGCD(deltaYaw, deltaPitch);
 		}
 	}
 
@@ -199,10 +203,9 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		if (serverYaw == null || serverPitch == null)
 			return;
 
-		if (event.GetPacket() instanceof ServerboundUseItemPacket packet) {
-			IServerboundUseItemPacket accessor = (IServerboundUseItemPacket) packet;
-			accessor.setYRot(serverYaw);
-			accessor.setXRot(serverPitch);
+		if (event.GetPacket() instanceof ServerboundUseItemPacket packet && 
+				(packet.yRot() != serverYaw || packet.xRot() != serverPitch)) {
+			event.SetPacket(new ServerboundUseItemPacket(packet.hand(), packet.sequence(), serverYaw, serverPitch));
 		}
 	}
 

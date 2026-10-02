@@ -37,6 +37,8 @@ import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.player.Player;
@@ -336,8 +338,11 @@ public class AutoCrystal extends Module implements TickListener, Render3DListene
 		if (multiPlace.getValue() && !useRaycast.getValue()) {
 			performMultiPlace(placePos);
 		} else {
-			MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
-			MC.player.swing(InteractionHand.MAIN_HAND);
+			SwingAnimation swingAnimation = MC.player.getMainHandItem().getInteractAnimation();
+			InteractionResult useResult = MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hit);
+			if (useResult instanceof InteractionResult.Success success
+					&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+				MC.player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
 		}
 
 		displayedBoxes.put(placePos, System.currentTimeMillis());
@@ -359,8 +364,11 @@ public class AutoCrystal extends Module implements TickListener, Render3DListene
 			Vec3 hitPos = Vec3.atCenterOf(pos).add(clickFace.getStepX() * 0.5, clickFace.getStepY() * 0.5,
 					clickFace.getStepZ() * 0.5);
 			BlockHitResult hitResult = new BlockHitResult(hitPos, clickFace, pos, false);
-			MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hitResult);
-			MC.player.swing(InteractionHand.MAIN_HAND);
+			SwingAnimation swingAnimation = MC.player.getMainHandItem().getInteractAnimation();
+			InteractionResult useResult = MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hitResult);
+			if (useResult instanceof InteractionResult.Success success
+					&& success.swingSource() == InteractionResult.SwingSource.PREDICTED)
+				MC.player.swing(InteractionHand.MAIN_HAND, swingAnimation, false);
 		}
 	}
 

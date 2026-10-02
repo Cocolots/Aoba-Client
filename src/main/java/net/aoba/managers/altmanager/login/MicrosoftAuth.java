@@ -20,8 +20,9 @@ import java.util.function.Consumer;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.minecraft.UserApiService;
-import com.mojang.authlib.yggdrasil.FriendsService;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+import com.mojang.blaze3d.Blaze3D;
+import com.mojang.authlib.services.FriendsService;
+import com.mojang.authlib.services.MinecraftServicesDiscoveryService;
 import com.mojang.logging.LogUtils;
 import com.mojang.util.UndashedUuid;
 import com.sun.net.httpserver.HttpExchange;
@@ -81,10 +82,10 @@ public class MicrosoftAuth {
 						Optional.empty(), Optional.empty());
 				IMC.setSession(session);
 
-				YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Proxy.NO_PROXY);
-				UserApiService apiService = authService.createUserApiService(session.getAccessToken());
+				MinecraftServicesDiscoveryService discoveryService = MinecraftServicesDiscoveryService.create(Proxy.NO_PROXY, true);
+				UserApiService apiService = discoveryService.createUserApiService(session.getAccessToken());
 				IMC.setUserApiService(apiService);
-				FriendsService friendsService = authService.createFriendsService(session.getAccessToken());
+				FriendsService friendsService = discoveryService.createFriendsService(session.getAccessToken());
 				IMC.setSocialInteractionsManager(new PlayerSocialManager(MC, apiService, friendsService,
 						new RemoteFriendListUpdateHandler(friendsService, MC)));
 				IMC.setProfileKeys(ProfileKeyPairManager.create(apiService, session, MC.gameDirectory.toPath()));
@@ -188,8 +189,8 @@ public class MicrosoftAuth {
 	public static void requestAuthToken(Consumer<AuthToken> onDataReceived) {
 		boolean success = startServer(onDataReceived);
 		if (success) {
-			Util.getPlatform().openUri("https://login.live.com/oauth20_authorize.srf?client_id=" + CLIENT_ID
-					+ "&response_type=code&redirect_uri=http://127.0.0.1:42069&scope=XboxLive.signin%20offline_access&prompt=select_account");
+			Blaze3D.openUri(URI.create("https://login.live.com/oauth20_authorize.srf?client_id=" + CLIENT_ID
+					+ "&response_type=code&redirect_uri=http://127.0.0.1:42069&scope=XboxLive.signin%20offline_access&prompt=select_account"));
 		}
 	}
 

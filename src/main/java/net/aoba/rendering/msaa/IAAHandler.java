@@ -1,8 +1,8 @@
 package net.aoba.rendering.msaa;
 
-import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.textures.GpuSampler;
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import org.jspecify.annotations.Nullable;
 
 /**

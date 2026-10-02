@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 import com.mojang.authlib.minecraft.UserApiService;
-import com.mojang.authlib.yggdrasil.ProfileResult;
+import com.mojang.authlib.services.ProfileResult;
 
 @Mixin(Minecraft.class)
 public interface IMinecraft {

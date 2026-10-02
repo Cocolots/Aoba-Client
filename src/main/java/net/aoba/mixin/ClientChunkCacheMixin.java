@@ -8,8 +8,6 @@
 
 package net.aoba.mixin;
 
-import java.util.Map;
-import java.util.function.Consumer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,12 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.aoba.Aoba;
 import net.aoba.event.events.ChunkEvent;
 import net.minecraft.client.multiplayer.ClientChunkCache;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 @Mixin(ClientChunkCache.class)
 public abstract class ClientChunkCacheMixin {
@@ -33,7 +29,7 @@ public abstract class ClientChunkCacheMixin {
 	public abstract LevelChunk getChunk(int x, int z, ChunkStatus status, boolean create);
 
 	@Inject(method = "replaceWithPacketData", at = @At("RETURN"))
-	private void onChunkLoaded(int x, int z, FriendlyByteBuf buf, Map<Heightmap.Types, long[]> map, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer, CallbackInfoReturnable<LevelChunk> cir) {
+	private void onChunkLoaded(int x, int z, ClientboundLevelChunkPacketData chunkData, CallbackInfoReturnable<LevelChunk> cir) {
 		LevelChunk chunk = cir.getReturnValue();
 		if (chunk != null) {
 			Aoba.getInstance().eventManager.Fire(new ChunkEvent.Loaded(chunk));

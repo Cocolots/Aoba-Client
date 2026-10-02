@@ -119,7 +119,7 @@ public class AirPlace extends Module implements TickListener, Render3DListener {
 		hitResult = target;
 
 		if (MC.options.keyUse.isDown()) {
-			InteractionUtils.interactBlock(target, InteractionHand.MAIN_HAND, true);
+			InteractionUtils.interactBlock(target, InteractionHand.MAIN_HAND);
 		}
 	}
 

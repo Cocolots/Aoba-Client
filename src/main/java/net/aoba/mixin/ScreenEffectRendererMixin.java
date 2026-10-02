@@ -7,9 +7,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.aoba.Aoba;
 import net.aoba.module.modules.render.NoRender;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
+import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 @Mixin(ScreenEffectRenderer.class)
@@ -25,7 +25,7 @@ public abstract class ScreenEffectRendererMixin {
 	}
 
 	@Inject(method = "submitWater", at = @At("HEAD"), cancellable = true)
-    private static void onRenderUnderwaterOverlay(Minecraft client, PoseStack matrices,
+	private static void onRenderUnderwaterOverlay(PlayerRenderState.WaterOverlay waterOverlay, PoseStack matrices,
 			SubmitNodeCollector vertexConsumers, CallbackInfo info) {
 		NoRender norender = Aoba.getInstance().moduleManager.norender;
 
