@@ -37,12 +37,12 @@ public class RPCManager {
         if (!started) {
             started = true;
             DiscordEventHandlers handlers = new DiscordEventHandlers();
-            rpc.Discord_Initialize("1268367396134191136", handlers, true, "");
+            rpc.Discord_Initialize("1497026345862168646", handlers, true, "");
             presence.startTimestamp = (System.currentTimeMillis() / 1000L);
             presence.largeImageText = "";
             rpc.Discord_UpdatePresence(presence);
 
-            thread = Thread.ofVirtual().name("TH-RPC-Handler").start(() -> {
+            thread = new Thread(() -> {
                 while (!Thread.currentThread().isInterrupted()) {
                     rpc.Discord_RunCallbacks();
 
@@ -65,7 +65,9 @@ public class RPCManager {
                     } catch (InterruptedException ignored) {
                     }
                 }
-            });
+            }, "TH-RPC-Handler");
+            
+            thread.start();
         }
     }
 
