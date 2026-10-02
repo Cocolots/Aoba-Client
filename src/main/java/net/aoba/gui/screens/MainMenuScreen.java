@@ -128,7 +128,7 @@ public class MainMenuScreen extends Screen {
 		drawContext.blit(RenderPipelines.GUI_TEXTURED, TextureBank.mainmenu_logo, logoX, logoY, 0, 0, logoWidth,
 				LOGO_HEIGHT, 719, 270, 719, 270);
 
-		drawContext.text(font, "Aoba " + AobaClient.AOBA_VERSION, 2, height - 10, 0xFFFF00FF);
+		drawContext.text(font, "Aoba Client", 2, height - 10, 0xFFFF00FF);
 
 		if (AobaClient.addons.isEmpty()) {
 			String noAddonsText = "No addons loaded";

@@ -53,7 +53,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
 public class AobaClient {
-	public static final String AOBA_VERSION = "1.4.5";
 	public static final KeyMapping.Category AOBA_CATEGORY =
 			new KeyMapping.Category(Identifier.fromNamespaceAndPath("aoba", "category"));
 

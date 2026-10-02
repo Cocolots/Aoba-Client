@@ -39,7 +39,7 @@ public class RPCManager {
             DiscordEventHandlers handlers = new DiscordEventHandlers();
             rpc.Discord_Initialize("1268367396134191136", handlers, true, "");
             presence.startTimestamp = (System.currentTimeMillis() / 1000L);
-            presence.largeImageText = "v" + AobaClient.AOBA_VERSION;
+            presence.largeImageText = "";
             rpc.Discord_UpdatePresence(presence);
 
             thread = Thread.ofVirtual().name("TH-RPC-Handler").start(() -> {
@@ -48,7 +48,7 @@ public class RPCManager {
 
                     presence.details = getDetails();
 
-                    presence.state = "v" + AobaClient.AOBA_VERSION + " | MC 26.2";
+                    presence.state = "MC 26.3";
 
                     presence.smallImageText = "logged as - " + MC.getUser().getName();
                     presence.smallImageKey = "https://minotar.net/helm/" + MC.getUser().getName() + "/100.png";
