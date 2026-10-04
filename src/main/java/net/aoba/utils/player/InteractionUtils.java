@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 
 import net.aoba.Aoba;
 import net.aoba.event.events.StartAttackEvent;
+import net.aoba.managers.rotation.RotationManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,15 +34,17 @@ public class InteractionUtils {
 	public static final int OFFHAND = 45;
 
 	/**
-	 * Raycasts towards a specific block at a specific vector.
+	 * Raycasts towards a specific block.
 	 * 
 	 * @param targetBlock Block to raycast to.
-	 * @param face        Face to check.
 	 * @return BlockHitResult if a ray collision occured, null otherwise.
 	 */
-	public static BlockHitResult raycastBlock(BlockPos targetBlock, Direction face) {
+	public static BlockHitResult raycastBlock(BlockPos targetBlock) {
+		RotationManager rotationManager = Aoba.getInstance().rotationManager;
 		Vec3 eye = MC.player.getEyePosition();
-		Vec3 end = eye.add(MC.player.getLookAngle().scale(MC.player.blockInteractionRange()));
+		Vec3 lookVector = rotationManager.getViewVector();
+		Vec3 end = eye.add(lookVector.scale(MC.player.blockInteractionRange()));
+		
 		BlockHitResult ray = MC.level
 				.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, MC.player));
 		if (ray.getType() != HitResult.Type.BLOCK)
@@ -49,7 +52,18 @@ public class InteractionUtils {
 
 		if (!targetBlock.equals(ray.getBlockPos()))
 			return null;
-
+		return ray;
+	}
+	
+	/**
+	 * Raycasts towards a specific block at a specific vector.
+	 * 
+	 * @param targetBlock Block to raycast to.
+	 * @param face        Face to check.
+	 * @return BlockHitResult if a ray collision occured, null otherwise.
+	 */
+	public static BlockHitResult raycastBlock(BlockPos targetBlock, Direction face) {
+		BlockHitResult ray = raycastBlock(targetBlock);
 		if (ray.getDirection() != face)
 			return null;
 		return ray;
@@ -60,8 +74,9 @@ public class InteractionUtils {
 	}
 
 	public static EntityHitResult raycastEntity(Predicate<Entity> filter, double reach) {
+		RotationManager rotationManager = Aoba.getInstance().rotationManager;
 		Vec3 eye = MC.player.getEyePosition();
-		Vec3 lookVector = MC.player.getViewVector(1.0f);
+		Vec3 lookVector = rotationManager.getViewVector();
 		Vec3 end = eye.add(lookVector.scale(reach));
 
 		BlockHitResult blockHit = MC.level

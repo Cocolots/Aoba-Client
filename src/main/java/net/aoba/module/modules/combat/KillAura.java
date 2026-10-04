@@ -253,16 +253,13 @@ public class KillAura extends Module implements SubtickListener, TickListener {
 
 		boolean attacked = false;
 		if (useRaycast.getValue()) {
-			HitResult ray = MC.hitResult;
+			HitResult ray = InteractionUtils.raycastEntity(target, radius.getValue());
 
 			if (ray != null && ray.getType() == HitResult.Type.ENTITY) {
 				EntityHitResult entityResult = (EntityHitResult) ray;
 				Entity ent = entityResult.getEntity();
-
-				if (ent == target) {
-					InteractionUtils.attack(ent);
-					attacked = true;
-				}
+				InteractionUtils.attack(ent);
+				attacked = true;
 			}
 		} else {
 			InteractionUtils.attack(target);

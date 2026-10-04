@@ -28,6 +28,7 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 public class RotationManager implements TickListener, Render3DListener, SendPacketListener, SendMovementPacketListener {
 	private static final Minecraft MC = Minecraft.getInstance();
@@ -140,6 +141,30 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 			}else
 				setGoal(null);
 		}
+	}
+	
+	public Vec3 getViewVector() {
+		float pitch;
+		float yaw;
+		
+		if (currentGoal.isFakeRotation()) {
+			yaw =  serverYaw;
+			pitch = serverPitch;
+		} else {
+			yaw = MC.player.getYRot();
+			pitch = MC.player.getXRot();
+		}
+		return calculateViewVector(yaw, pitch);
+	}
+	
+	private Vec3 calculateViewVector(float pitch, float yaw) {
+		float realXRot = yaw * (float) (Math.PI / 180.0);
+	      float realYRot = -pitch * (float) (Math.PI / 180.0);
+	      float yCos = Mth.cos(realYRot);
+	      float ySin = Mth.sin(realYRot);
+	      float xCos = Mth.cos(realXRot);
+	      float xSin = Mth.sin(realXRot);
+	      return new Vec3(ySin * xCos, -xSin, yCos * xCos);
 	}
 
 	private Rotation getRotationFromGoal(float startYaw, float startPitch, float partialTick, float frameDelta) {

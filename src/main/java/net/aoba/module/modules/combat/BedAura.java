@@ -26,6 +26,7 @@ import net.aoba.module.Module;
 import net.aoba.rendering.shaders.Shader;
 import net.aoba.settings.types.BooleanSetting;
 import net.aoba.settings.types.ShaderSetting;
+import net.aoba.utils.player.InteractionUtils;
 import net.aoba.settings.types.EnumSetting;
 import net.aoba.settings.types.FloatSetting;
 import net.minecraft.core.BlockPos;
@@ -184,12 +185,9 @@ public class BedAura extends Module implements Render3DListener, TickListener, B
 					return;
 
 				if (useRaycast.getValue()) {
-					HitResult ray = MC.hitResult;
-
-					if (ray != null && ray.getType() == HitResult.Type.BLOCK) {
-						BlockHitResult blockResult = (BlockHitResult) ray;
-
-						if (currentBlockToBreak.equals(blockResult.getBlockPos())) {
+					BlockHitResult ray = InteractionUtils.raycastBlock(currentBlockToBreak);
+					if (ray != null) {
+						if (currentBlockToBreak.equals(ray.getBlockPos())) {
 							breakBlock(currentBlockToBreak);
 						}
 					}

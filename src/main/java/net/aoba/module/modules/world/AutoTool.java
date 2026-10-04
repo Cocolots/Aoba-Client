@@ -63,7 +63,8 @@ public class AutoTool extends Module implements BlockStateListener, TickListener
 
     @Override
     public void onTick(Pre event) {
-        if (MC.player == null || MC.hitResult == null) return;
+        if (MC.player == null || MC.hitResult == null) 
+        	return;
 
         HitResult ray = MC.hitResult;
         if (ray.getType() != HitResult.Type.BLOCK) {
