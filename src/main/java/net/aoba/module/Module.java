@@ -462,23 +462,6 @@ public abstract class Module {
 		});
 	}
 
-	public static void rotatePitch(float degrees) {
-		Minecraft client = Minecraft.getInstance();
-		Player player = client.player;
-
-		if (player != null) {
-			float currentPitch = player.getXRot();
-			float newPitch = currentPitch + degrees;
-
-			newPitch = Math.max(-90.0F, Math.min(90.0F, newPitch));
-
-			player.setXRot(newPitch);
-
-			client.getConnection().send(
-					new ServerboundMovePlayerPacket.Rot(player.getYRot(), newPitch, player.onGround(), false));
-		}
-	}
-
 	public static void sendChatMessage(String message) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.gui != null) {

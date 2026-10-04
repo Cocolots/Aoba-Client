@@ -27,6 +27,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec2;
 
 public class RotationManager implements TickListener, Render3DListener, SendPacketListener, SendMovementPacketListener {
 	private static final Minecraft MC = Minecraft.getInstance();
@@ -131,9 +132,13 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 			serverPitch = (float) finalRotation.pitch();
 			lastAppliedRotation = new Rotation(serverYaw, serverPitch);
 		} else {
-			MC.player.setYRot((float) finalRotation.yaw());
-			MC.player.setXRot((float) finalRotation.pitch());
-			lastAppliedRotation = new Rotation(MC.player.getYRot(), MC.player.getXRot());
+			// Stop goal if it is finished.
+			if(currentRotationGoalProgress < 1.0) {
+				MC.player.setYRot((float) finalRotation.yaw());
+				MC.player.setXRot((float) finalRotation.pitch());
+				lastAppliedRotation = new Rotation(MC.player.getYRot(), MC.player.getXRot());
+			}else
+				setGoal(null);
 		}
 	}
 
