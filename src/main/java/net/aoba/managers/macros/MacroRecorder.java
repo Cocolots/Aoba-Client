@@ -112,7 +112,7 @@ public class MacroRecorder
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-		if (event.GetKey() != Aoba.getInstance().guiManager.clickGuiButton.getValue().getValue()
+		if (event.GetKey() != Aoba.getInstance().guiManager.clickGuiButton.getValue().getKeyCode()
 				&& event.GetKey() != 256
 				&& !Aoba.getInstance().guiManager.isClickGuiOpen()) {
 			heldKeys.remove(Integer.valueOf(event.GetKey()));
@@ -124,7 +124,7 @@ public class MacroRecorder
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		if (event.GetKey() != Aoba.getInstance().guiManager.clickGuiButton.getValue().getValue()
+		if (event.GetKey() != Aoba.getInstance().guiManager.clickGuiButton.getValue().getKeyCode()
 				&& event.GetKey() != 256
 				&& !Aoba.getInstance().guiManager.isClickGuiOpen()) {
 			heldKeys.add(event.GetKey());

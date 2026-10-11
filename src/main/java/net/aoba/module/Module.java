@@ -25,6 +25,7 @@ import net.aoba.settings.Setting;
 import net.aoba.settings.types.BooleanSetting;
 import net.aoba.settings.types.KeybindSetting;
 import net.aoba.utils.FindItemResult;
+import net.aoba.utils.input.Keybind;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -55,10 +56,10 @@ public abstract class Module {
 	 * @param name The name to use for this module.
 	 */
 	public Module(String name) {
-		this(name, InputConstants.UNKNOWN);
+		this(name, Keybind.from(InputConstants.UNKNOWN));
 	}
 
-	public Module(String name, Key keybind) {
+	public Module(String name, Keybind keybind) {
 		this.name = name;
 		keyBind = KeybindSetting.builder().id("key." + name.toLowerCase()).displayName(name + " Key")
 				.defaultValue(keybind).build();
@@ -245,6 +246,17 @@ public abstract class Module {
 			state.setValue(!state.getValue());
 	}
 
+	public void enable() {
+		if (isDetectable(AOBA_CLIENT.moduleManager.antiCheat.getValue()))
+			state.setValue(false);
+		else
+			state.setValue(true);
+	}
+	
+	public void disable() {
+		state.setValue(false);
+	}
+	
 	public boolean isDetectable(AntiCheat anticheat) {
 		return knownDetectable.contains(anticheat);
 	}

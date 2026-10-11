@@ -26,17 +26,20 @@ import net.aoba.gui.types.GridDefinition.RelativeUnit;
 import net.aoba.utils.input.CursorStyle;
 import net.aoba.utils.types.MouseAction;
 import net.aoba.utils.types.MouseButton;
+import net.aoba.utils.input.Keybind;
 
 public class KeybindComponent extends Component implements KeyDownListener {
 	private boolean listeningForKey;
 	private final StringComponent label;
 	private final StringComponent keyTextComponent;
+	private final CheckboxComponent momentaryCheckbox;
 
-	public static UIProperty<Key> SelectedKeyProperty = new UIProperty<>("SelectedKey", InputConstants.UNKNOWN, false, true, KeybindComponent::OnSelectedKeyPropertyChanged);
+	public static UIProperty<Keybind> SelectedKeyProperty = new UIProperty<>("SelectedKey", new Keybind(InputConstants.UNKNOWN, false), false, true, KeybindComponent::OnSelectedKeyPropertyChanged);
 	public static UIProperty<String> HeaderProperty = new UIProperty<>("Header", "", false, true, KeybindComponent::OnHeaderPropertyChanged);
 	
-	private Consumer<Key> onChanged = null;
-	private static void OnSelectedKeyPropertyChanged(UIElement sender, Key oldValue, Key newValue) {
+	private Consumer<Keybind> onChanged = null;
+	
+	private static void OnSelectedKeyPropertyChanged(UIElement sender, Keybind oldValue, Keybind newValue) {
 		if(sender instanceof KeybindComponent keybind) {
 			keybind.keyTextComponent.setProperty(StringComponent.TextProperty, keybind.getKeyDisplayText());
 			
@@ -57,12 +60,24 @@ public class KeybindComponent extends Component implements KeyDownListener {
 		GridComponent grid = new GridComponent();
 		grid.addColumnDefinition(new GridDefinition(1f, RelativeUnit.Relative));
 		grid.addColumnDefinition(new GridDefinition(RelativeUnit.Auto));
+		grid.addColumnDefinition(new GridDefinition(RelativeUnit.Auto));
 
+		// Label
 		label = new StringComponent();
 		label.setProperty(StringComponent.TextProperty, getProperty(KeybindComponent.HeaderProperty));
 		label.setProperty(UIElement.VerticalAlignmentProperty, VerticalAlignment.Center);
 		grid.addChild(label);
 
+		// Checkbox
+		momentaryCheckbox = new CheckboxComponent();
+		momentaryCheckbox.setProperty(Component.VerticalAlignmentProperty, VerticalAlignment.Center);
+		momentaryCheckbox.setOnChanged(e -> {
+			Keybind keybind = this.getProperty(KeybindComponent.SelectedKeyProperty);
+			this.setProperty(KeybindComponent.SelectedKeyProperty, new Keybind(keybind.getKey(), e.booleanValue()));
+		});
+		grid.addChild(momentaryCheckbox);
+		
+		// Key Button
 		RectangleComponent keyButton = new RectangleComponent();
 		keyButton.bindProperty(UIElement.BackgroundProperty, GuiManager.componentBackgroundColor);
 		keyButton.bindProperty(UIElement.BorderProperty, GuiManager.componentBorderColor);
@@ -89,10 +104,10 @@ public class KeybindComponent extends Component implements KeyDownListener {
 	}
 	
 	private String getKeyDisplayText() {
-		Key keybind = getProperty(SelectedKeyProperty);
-		if (keybind == null || keybind.equals(InputConstants.UNKNOWN))
+		Keybind keybind = getProperty(SelectedKeyProperty);
+		if (keybind == null || keybind.getKey() == InputConstants.UNKNOWN)
 			return "N/A";
-		return keybind.getDisplayName().getString();
+		return keybind.getKey().getDisplayName().getString();
 	}
 
 
@@ -103,12 +118,13 @@ public class KeybindComponent extends Component implements KeyDownListener {
 					? InputConstants.UNKNOWN
 					: InputConstants.Type.KEYBOARD.getOrCreate(event.GetKey());
 
-			setProperty(SelectedKeyProperty, key);
+			boolean isMomentary = momentaryCheckbox.getProperty(CheckboxComponent.IsCheckedProperty);
+			setProperty(SelectedKeyProperty, new Keybind(key, isMomentary));
 			setListeningForKey(false);
 			event.cancel();
 		}
 	}
-
+	
 	private void setListeningForKey(boolean state) {
 		if (listeningForKey == state)
 			return;
@@ -131,7 +147,7 @@ public class KeybindComponent extends Component implements KeyDownListener {
 		}
 	}
 	
-	public void setOnChanged(Consumer<Key> consumer) {
+	public void setOnChanged(Consumer<Keybind> consumer) {
 		this.onChanged = consumer;
 	}
 }

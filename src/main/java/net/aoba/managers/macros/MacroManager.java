@@ -32,6 +32,7 @@ import net.aoba.managers.macros.actions.MacroEvent;
 import net.aoba.managers.macros.actions.MouseClickMacroEvent;
 import net.aoba.managers.macros.actions.MouseMoveMacroEvent;
 import net.aoba.managers.macros.actions.MouseScrollMacroEvent;
+import net.aoba.utils.input.Keybind;
 import net.aoba.utils.types.ObservableList;
 import net.minecraft.client.Minecraft;
 
@@ -97,7 +98,7 @@ public class MacroManager implements KeyDownListener {
 		String filePath = file.getPath();
 		LinkedList<MacroEvent> events = new LinkedList<MacroEvent>();
 		boolean looping = false;
-		Key keybind = InputConstants.UNKNOWN;
+		Keybind keybind = Keybind.from(InputConstants.UNKNOWN);
 
 		try (DataInputStream in = new DataInputStream(new FileInputStream(filePath))) {
 			// Read flags until we hit the terminator (0x00).
@@ -105,7 +106,7 @@ public class MacroManager implements KeyDownListener {
 			while ((flag = in.readByte()) != FLAG_TERMINATOR) {
 				switch (flag) {
 					case FLAG_LOOPING -> looping = true;
-					case FLAG_KEYBIND -> keybind = InputConstants.Type.KEYBOARD.getOrCreate(in.readInt());
+					case FLAG_KEYBIND -> keybind = Keybind.from(InputConstants.Type.KEYBOARD.getOrCreate(in.readInt()));
 					default -> {}
 				}
 			}
@@ -153,19 +154,19 @@ public class MacroManager implements KeyDownListener {
 					// Write flags.
 					if (macro.isLooping())
 						out.writeByte(FLAG_LOOPING);
-					if (macro.getKeybind() != InputConstants.UNKNOWN) {
+					if (macro.getKeybind().getKey() != InputConstants.UNKNOWN) {
 						out.writeByte(FLAG_KEYBIND);
-						out.writeInt(macro.getKeybind().getValue());
+						out.writeInt(macro.getKeybind().getKeyCode());
 					}
 					out.writeByte(FLAG_TERMINATOR);
 
 					// Write events.
 					for (MacroEvent event : macro.getEvents()) {
 						byte id =  switch (event) {
-							case KeyClickMacroEvent e -> EVENT_KEY;
-							case MouseClickMacroEvent e -> EVENT_CLICK;
-							case MouseMoveMacroEvent e -> EVENT_MOVE;
-							case MouseScrollMacroEvent e -> EVENT_SCROLL;
+							case KeyClickMacroEvent _ -> EVENT_KEY;
+							case MouseClickMacroEvent _ -> EVENT_CLICK;
+							case MouseMoveMacroEvent _ -> EVENT_MOVE;
+							case MouseScrollMacroEvent _ -> EVENT_SCROLL;
 							default -> -1;
 						};
 
@@ -237,8 +238,8 @@ public class MacroManager implements KeyDownListener {
 
 		int key = event.GetKey();
 		for (Macro macro : macros) {
-			Key bind = macro.getKeybind();
-			if (bind != InputConstants.UNKNOWN && bind.getValue() == key) {
+			Keybind bind = macro.getKeybind();
+			if (bind.getKey() != InputConstants.UNKNOWN && bind.getKeyCode() == key) {
 				if (player.isPlaying()) {
 					player.stop();
 				} else {

@@ -16,6 +16,8 @@ import java.util.Objects;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.InputConstants.Key;
+
 import net.aoba.Aoba;
 import net.aoba.AobaClient;
 import net.aoba.event.events.KeyDownEvent;
@@ -83,6 +85,7 @@ import net.aoba.settings.types.FontSetting;
 import net.aoba.settings.types.KeybindSetting;
 import net.aoba.utils.input.CursorStyle;
 import net.aoba.utils.input.Input;
+import net.aoba.utils.input.Keybind;
 import net.aoba.rendering.Renderer2D;
 import net.aoba.rendering.shaders.Shader;
 import net.minecraft.client.KeyMapping;
@@ -95,7 +98,7 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	private static final Minecraft MC = Minecraft.getInstance();
 	
 	public KeybindSetting clickGuiButton = KeybindSetting.builder().id("key.clickgui").displayName("ClickGUI Key")
-			.defaultValue(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_RSHIFT)).build();
+			.defaultValue(Keybind.from(InputConstants.KEY_RSHIFT)).build();
 	
 	private static CursorStyle currentCursor = CursorStyle.Default;
 	private static String tooltip = null;
@@ -403,7 +406,8 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		if (clickGuiButton.getValue().getValue() == event.GetKey() && MC.gui.screen() == null && !isKeyboardInputActive) {
+		Keybind clickguiKeybind = clickGuiButton.getValue();
+		if (clickguiKeybind.getKeyCode() == event.GetKey() && MC.gui.screen() == null && !isKeyboardInputActive) {
 			setClickGuiOpen(!clickGuiOpen);
 			toggleMouse();
 		}

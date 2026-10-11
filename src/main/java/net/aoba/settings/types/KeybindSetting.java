@@ -9,20 +9,20 @@
 package net.aoba.settings.types;
 
 import net.aoba.settings.Setting;
-import com.mojang.blaze3d.platform.InputConstants.Key;
+import net.aoba.utils.input.Keybind;
 import java.util.function.Consumer;
 
-public class KeybindSetting extends Setting<Key> {
-    protected KeybindSetting(String ID, String displayName, String description, Key default_value, Consumer<Key> onUpdate) {
+public class KeybindSetting extends Setting<Keybind> {
+    protected KeybindSetting(String ID, String displayName, String description, Keybind default_value, Consumer<Keybind> onUpdate) {
         super(ID, displayName, description, default_value, onUpdate);
         type = TYPE.KEYBIND;
     }
-
+   
     /**
      * Checks whether or not a value is with this setting's valid range.
      */
     @Override
-    protected boolean isValueValid(Key value) {
+    protected boolean isValueValid(Keybind value) {
         return true;
     }
     
@@ -30,13 +30,17 @@ public class KeybindSetting extends Setting<Key> {
     	return new KeybindSetting.BUILDER();
     }
     
-    public static class BUILDER extends Setting.BUILDER<KeybindSetting.BUILDER, KeybindSetting, Key> {
+    public static class BUILDER extends Setting.BUILDER<KeybindSetting.BUILDER, KeybindSetting, Keybind> {
 		protected BUILDER() {
         }
 
 		@Override
 		public KeybindSetting build() {
 			return new KeybindSetting(id, displayName, description, defaultValue, onUpdate);
+		}
+		
+		public KeybindSetting.BUILDER setMomentary(boolean value) {
+			return this;
 		}
 	}
 }
