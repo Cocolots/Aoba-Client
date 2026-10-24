@@ -144,10 +144,18 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 			.displayName("UI Panel Border Color").description("Accent color of the background.")
 			.defaultValue(Shader.solid(new Color(100, 100, 100, 100))).build();
 
+	public static ShaderSetting componentBackgroundColor = ShaderSetting.builder().id("ui_component_background_color")
+			.displayName("UI Component Background Color").description("Background colors of components (i.e TextBox).")
+			.defaultValue(Shader.solid(new Color(20, 20, 20, 95))).build();
+	
+	public static ShaderSetting componentHoveredBackgroundColor = ShaderSetting.builder().id("ui_component_hover_background_color")
+			.displayName("UI Component Hovered Background Color").description("Background colors of components (i.e TextBox) when hovered.")
+			.defaultValue(Shader.solid(new Color(50, 50, 50, 150))).build();
+	
 	public static ShaderSetting componentBorderColor = ShaderSetting.builder().id("ui_component_border_color")
 			.displayName("UI Component Border Color").description("Background colors of components (i.e TextBox).")
 			.defaultValue(Shader.solid(new Color(115, 115, 115, 200))).build();
-
+	
 	public static ShaderSetting windowBackgroundColor = ShaderSetting.builder().id("ui_window_background_color")
 			.displayName("UI Background Color").description("Color of the background.")
 			.defaultValue(Shader.blur(new Color(55, 55, 55, 255), 60f, 5f)).build();
@@ -155,10 +163,6 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	public static ShaderSetting panelBackgroundColor = ShaderSetting.builder().id("ui_panel_background_color")
 			.displayName("UI Panel Background Color").description("Accent color of the background.")
 			.defaultValue(Shader.solid(new Color(90, 90, 90, 60))).build();
-
-	public static ShaderSetting componentBackgroundColor = ShaderSetting.builder().id("ui_component_background_color")
-			.displayName("UI Component Background Color").description("Background colors of components (i.e TextBox).")
-			.defaultValue(Shader.solid(new Color(20, 20, 20, 95))).build();
 
 	public static ShaderSetting buttonBackgroundColor = ShaderSetting.builder().id("ui_button_background_color")
 			.displayName("UI Button Background Color").description("Background color of buttons.")
@@ -168,6 +172,11 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 			.id("ui_button_hover_background_color").displayName("UI Button Hover Background Color")
 			.description("Background color of buttons when hovered.")
 			.defaultValue(Shader.gradient(new Color(210, 80, 255), new Color(130, 40, 190), 90f)).build();
+	
+	public static ShaderSetting buttonPressedBackgroundColor = ShaderSetting.builder()
+			.id("ui_button_pressed_background_color").displayName("UI Button Pressed Background Color")
+			.description("Background color of buttons when pressed.")
+			.defaultValue(Shader.gradient(new Color(150, 20, 195), new Color(70, 0, 130), 90f)).build();
 
 	public static ShaderSetting buttonBorderColor = ShaderSetting.builder().id("ui_button_border_color")
 			.displayName("UI Button Border Color").description("Border color of buttons.")
@@ -206,11 +215,13 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 		SettingManager.registerGlobalSetting(panelBorderColor);
 		SettingManager.registerGlobalSetting(panelBackgroundColor);
 		SettingManager.registerGlobalSetting(componentBackgroundColor);
+		SettingManager.registerGlobalSetting(componentHoveredBackgroundColor);
 		SettingManager.registerGlobalSetting(foregroundColor);
 		SettingManager.registerGlobalSetting(foregroundHeaderColor);
 		SettingManager.registerGlobalSetting(foregroundAccentColor);
 		SettingManager.registerGlobalSetting(buttonBackgroundColor);
 		SettingManager.registerGlobalSetting(buttonHoverBackgroundColor);
+		SettingManager.registerGlobalSetting(buttonPressedBackgroundColor);
 		SettingManager.registerGlobalSetting(buttonBorderColor);
 		SettingManager.registerGlobalSetting(roundingRadius);
 		SettingManager.registerGlobalSetting(lineThickness);

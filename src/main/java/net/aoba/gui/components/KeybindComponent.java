@@ -19,6 +19,7 @@ import net.aoba.gui.UIElement;
 import net.aoba.gui.UIProperty;
 import net.aoba.gui.types.GridDefinition;
 import net.aoba.gui.types.HorizontalAlignment;
+import net.aoba.gui.types.TextAlign;
 import net.aoba.gui.types.TextWrapping;
 import net.aoba.gui.types.Thickness;
 import net.aoba.gui.types.VerticalAlignment;
@@ -26,13 +27,14 @@ import net.aoba.gui.types.GridDefinition.RelativeUnit;
 import net.aoba.utils.input.CursorStyle;
 import net.aoba.utils.types.MouseAction;
 import net.aoba.utils.types.MouseButton;
+import net.minecraft.client.gui.TextAlignment;
 import net.aoba.utils.input.Keybind;
 
 public class KeybindComponent extends Component implements KeyDownListener {
 	private boolean listeningForKey;
 	private final StringComponent label;
 	private final StringComponent keyTextComponent;
-	private final CheckboxComponent momentaryCheckbox;
+	private final ToggleButtonComponent momentaryButton;
 
 	public static UIProperty<Keybind> SelectedKeyProperty = new UIProperty<>("SelectedKey", new Keybind(InputConstants.UNKNOWN, false), false, true, KeybindComponent::OnSelectedKeyPropertyChanged);
 	public static UIProperty<String> HeaderProperty = new UIProperty<>("Header", "", false, true, KeybindComponent::OnHeaderPropertyChanged);
@@ -58,6 +60,7 @@ public class KeybindComponent extends Component implements KeyDownListener {
 		setProperty(UIElement.CursorProperty, CursorStyle.Type);
 		
 		GridComponent grid = new GridComponent();
+		grid.setProperty(GridComponent.HorizontalSpacingProperty, 4f);
 		grid.addColumnDefinition(new GridDefinition(1f, RelativeUnit.Relative));
 		grid.addColumnDefinition(new GridDefinition(RelativeUnit.Auto));
 		grid.addColumnDefinition(new GridDefinition(RelativeUnit.Auto));
@@ -69,13 +72,21 @@ public class KeybindComponent extends Component implements KeyDownListener {
 		grid.addChild(label);
 
 		// Checkbox
-		momentaryCheckbox = new CheckboxComponent();
-		momentaryCheckbox.setProperty(Component.VerticalAlignmentProperty, VerticalAlignment.Center);
-		momentaryCheckbox.setOnChanged(e -> {
+		momentaryButton = new ToggleButtonComponent();
+		momentaryButton.setProperty(Component.VerticalAlignmentProperty, VerticalAlignment.Center);
+		momentaryButton.setOnChanged(e -> {
 			Keybind keybind = this.getProperty(KeybindComponent.SelectedKeyProperty);
 			this.setProperty(KeybindComponent.SelectedKeyProperty, new Keybind(keybind.getKey(), e.booleanValue()));
 		});
-		grid.addChild(momentaryCheckbox);
+		
+		momentaryButton.setProperty(UIElement.PaddingProperty, new Thickness(2f));
+
+		StringComponent momentaryButtonLabel = new StringComponent();
+		momentaryButtonLabel.setProperty(StringComponent.FontSizeProperty, 10f);
+		momentaryButtonLabel.setProperty(StringComponent.TextProperty, "Hold");
+		momentaryButtonLabel.setProperty(StringComponent.TextAlignmentProperty, TextAlign.Center);
+		momentaryButton.setContent(momentaryButtonLabel);
+		grid.addChild(momentaryButton);
 		
 		// Key Button
 		RectangleComponent keyButton = new RectangleComponent();
@@ -118,7 +129,7 @@ public class KeybindComponent extends Component implements KeyDownListener {
 					? InputConstants.UNKNOWN
 					: InputConstants.Type.KEYBOARD.getOrCreate(event.GetKey());
 
-			boolean isMomentary = momentaryCheckbox.getProperty(CheckboxComponent.IsCheckedProperty);
+			boolean isMomentary = momentaryButton.getProperty(CheckboxComponent.IsCheckedProperty);
 			setProperty(SelectedKeyProperty, new Keybind(key, isMomentary));
 			setListeningForKey(false);
 			event.cancel();

@@ -20,7 +20,8 @@ import net.aoba.utils.types.MouseButton;
 
 public class ButtonComponent extends Component {
 	private Runnable onClick;
-
+	private boolean isPressed = false;
+	
 	/**
 	 * Constructor for button component.
 	 *
@@ -37,7 +38,8 @@ public class ButtonComponent extends Component {
 	@Override
 	public void draw(Renderer2D renderer, float partialTicks) {
 		boolean hovered = getProperty(UIElement.IsHoveredProperty);
-		Shader bgEffect = hovered ? GuiManager.buttonHoverBackgroundColor.getValue()
+		
+		Shader bgEffect = isPressed ? GuiManager.buttonPressedBackgroundColor.getValue() : hovered ? GuiManager.buttonHoverBackgroundColor.getValue()
 				: getProperty(BackgroundProperty);
 		Shader bdEffect = getProperty(BorderProperty);
 		Float cornerRadius = getProperty(CornerRadiusProperty);
@@ -76,13 +78,24 @@ public class ButtonComponent extends Component {
 	@Override
 	public void onMouseClick(MouseClickEvent event) {
 		super.onMouseClick(event);
-		if (event.button == MouseButton.LEFT && event.action == MouseAction.DOWN) {
+		if (event.button == MouseButton.LEFT) {
 			boolean hovered = getProperty(UIElement.IsHoveredProperty);
 			if (hovered) {
-				if (onClick != null)
-					onClick.run();
+				
+				if(event.action == MouseAction.DOWN) {
+					isPressed = true;
+				}else if(event.action == MouseAction.UP) {
+					if (onClick != null) {
+						onClick.run();
+					}
+					isPressed = false;
+				}
 				event.cancel();
+			}else {
+				isPressed = false;
 			}
+		}else {
+			isPressed = false;
 		}
 	}
 }
