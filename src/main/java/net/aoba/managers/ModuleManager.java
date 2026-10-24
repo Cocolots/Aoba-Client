@@ -19,7 +19,9 @@ import com.mojang.logging.LogUtils;
 import net.aoba.Aoba;
 import net.aoba.api.IAddon;
 import net.aoba.event.events.KeyDownEvent;
+import net.aoba.event.events.KeyUpEvent;
 import net.aoba.event.listeners.KeyDownListener;
+import net.aoba.event.listeners.KeyUpListener;
 import net.aoba.gui.GuiManager;
 import net.aoba.module.AntiCheat;
 import net.aoba.module.Module;
@@ -84,9 +86,11 @@ import net.aoba.module.modules.render.Zoom;
 import net.aoba.module.modules.world.*;
 import net.aoba.settings.Setting;
 import net.aoba.settings.types.EnumSetting;
+import net.aoba.settings.types.KeybindSetting;
+import net.aoba.utils.input.Keybind;
 import net.minecraft.client.Minecraft;
 
-public class ModuleManager implements KeyDownListener {
+public class ModuleManager implements KeyDownListener, KeyUpListener {
 	private static final Minecraft MC = Minecraft.getInstance();
 
 	public ArrayList<Module> modules = new ArrayList<Module>();
@@ -214,6 +218,7 @@ public class ModuleManager implements KeyDownListener {
 		}
 
 		Aoba.getInstance().eventManager.AddListener(KeyDownListener.class, this);
+		Aoba.getInstance().eventManager.AddListener(KeyUpListener.class, this);
 	}
 
 	public void addModule(Module module) {
@@ -246,12 +251,42 @@ public class ModuleManager implements KeyDownListener {
 			for (Module module : modules) {
 				if (module.isDetectable(antiCheat.getValue()))
 					continue;
-
-				Key binding = module.getBind().getValue();
-				if (binding.getValue() == InputConstants.UNKNOWN.getValue())
+				
+				KeybindSetting setting = module.getBind();
+				Keybind binding = setting.getValue();
+				int keyCode = binding.getKeyCode();
+				
+				if (keyCode == InputConstants.UNKNOWN.getValue())
 					continue;
-				if (binding.getValue() == event.GetKey()) {
-					module.toggle();
+				
+				
+				if (keyCode == event.GetKey()) {
+					if(binding.getIsMomentary())
+						module.enable();
+					else
+						module.toggle();
+				}
+			}
+		}
+	}
+
+	@Override
+	public void onKeyUp(KeyUpEvent event) {
+		if (GuiManager.isKeyboardInputActive())
+			return;
+		if (event.GetKey() == InputConstants.UNKNOWN.getValue())
+			return;
+
+		if (MC.gui.screen() == null) {
+			for (Module module : modules) {
+				KeybindSetting setting = module.getBind();
+				Keybind binding = setting.getValue();
+				int keyCode = binding.getKeyCode();
+				if (keyCode == InputConstants.UNKNOWN.getValue())
+					continue;
+				
+				if (binding.getIsMomentary() && keyCode == event.GetKey()) {
+					module.disable();
 				}
 			}
 		}

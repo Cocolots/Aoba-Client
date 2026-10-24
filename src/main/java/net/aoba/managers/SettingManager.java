@@ -24,6 +24,7 @@ import net.aoba.gui.types.Rectangle;
 import net.aoba.rendering.shaders.Shader;
 import net.aoba.settings.Setting;
 import net.aoba.settings.types.*;
+import net.aoba.utils.input.Keybind;
 import net.aoba.utils.types.Range;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -161,8 +162,9 @@ public class SettingManager {
 					properties.setProperty(setting.ID, fontSetting.getFontName());
 				}
 				case KEYBIND -> {
-					Key key = ((Key) setting.getValue());
-					properties.setProperty(setting.ID, String.valueOf(key.getValue()));
+					KeybindSetting keybindSetting = (KeybindSetting)setting;
+					Keybind key = keybindSetting.getValue();
+					properties.setProperty(setting.ID, String.valueOf(key.getKeyCode() + "," + key.getIsMomentary()));
 				}
 				case RECTANGLE -> {
 					Rectangle rect = (Rectangle) setting.getValue();
@@ -327,8 +329,15 @@ public class SettingManager {
 						fontSetting.setFontName(value);
 					}
 					case KEYBIND -> {
-						int keyCode = Integer.parseInt(value);
-						setting.setValue(InputConstants.Type.KEYBOARD.getOrCreate(keyCode));
+						KeybindSetting keybindSetting = (KeybindSetting) setting;
+						String[] keybindValue = value.split(",");
+						int keyCode = Integer.parseInt(keybindValue[0]);
+						boolean momentary = false;
+						if(keybindValue.length > 1)
+							momentary = Boolean.parseBoolean(keybindValue[1]);
+						
+						Key key = InputConstants.Type.KEYBOARD.getOrCreate(keyCode);
+						keybindSetting.setValue(new Keybind(key, momentary));
 					}
 					case RECTANGLE -> {
 						String[] dimensions = value.split(",");

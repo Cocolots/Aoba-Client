@@ -11,6 +11,7 @@ package net.aoba.module.modules.render;
 import java.util.HashSet;
 
 import net.aoba.settings.types.BooleanSetting;
+import net.aoba.utils.input.Keybind;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
@@ -37,7 +38,7 @@ public class XRay extends Module {
 			.onUpdate(this::ReloadRenderer).build();
 
 	public XRay() {
-		super("XRay", InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_X));
+		super("XRay", Keybind.from(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_X)));
 		setCategory(Category.of("Render"));
 		setDescription("Allows the player to see ores.");
 		addSetting(blocks);

@@ -9,12 +9,10 @@
 package net.aoba.command.commands;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants.Key;
-
 import net.aoba.Aoba;
 import net.aoba.command.Command;
 import net.aoba.command.InvalidSyntaxException;
-import net.aoba.managers.CommandManager;
+import net.aoba.utils.input.Keybind;
 
 public class CmdClickgui extends Command {
 
@@ -28,14 +26,10 @@ public class CmdClickgui extends Command {
             case "set":
                 if (parameters.length != 2)
                     throw new InvalidSyntaxException(this);
-                char keybind = Character.toLowerCase(parameters[1].charAt(0));
-                CommandManager.sendChatMessage("Setting keybind to " + keybind + ".");
-                String inputKey = "key.keyboard." + keybind;
-                Key key = InputConstants.getKey(inputKey);
-                Aoba.getInstance().guiManager.clickGuiButton.setValue(key);
+                char keybind = Character.toUpperCase(parameters[1].charAt(0));
+                Aoba.getInstance().guiManager.clickGuiButton.setValue(Keybind.from(InputConstants.Type.KEYBOARD.getOrCreate((int) keybind)));
                 break;
             case "open":
-            	CommandManager.sendChatMessage("Opening ClickGUI.");
                 Aoba.getInstance().guiManager.setClickGuiOpen(true);
                 break;
             default:
