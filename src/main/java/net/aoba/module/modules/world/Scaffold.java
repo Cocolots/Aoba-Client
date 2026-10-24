@@ -22,6 +22,8 @@ import net.aoba.settings.types.FloatSetting;
 import net.aoba.settings.types.KeybindSetting;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
+
+import net.aoba.utils.input.Keybind;
 import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,7 +42,7 @@ public class Scaffold extends Module implements TickListener {
 	private final KeybindSetting descendScaffoldKey = KeybindSetting.builder().id("scaffold_descend_key")
 			.displayName("Descend Key")
 			.description("Hold this key to descend down.")
-			.defaultValue(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_LSHIFT)).build();
+			.defaultValue(Keybind.from(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_LSHIFT))).build();
 
 	private final FloatSetting placeDelay = FloatSetting.builder().id("scaffold_place_delay").displayName("Place Delay")
 			.description("How long (in ticks) until Scaffold will place the next block below the player.")
@@ -175,8 +177,11 @@ public class Scaffold extends Module implements TickListener {
 			MC.options.keyShift.setDown(false);
 
 		// Determine the height at which the player will build.
-		Key descendKey = descendScaffoldKey.getValue();
-		if (descendKey.getValue() > 0 && InputConstants.isKeyDown(descendKey.getValue())) {
+		Keybind descendKeybind = descendScaffoldKey.getValue();
+		if (descendKeybind.getKey() == InputConstants.UNKNOWN)
+			return;
+		
+		if (InputConstants.isKeyDown(descendKeybind.getKeyCode())) {
 			yPosition = MC.player.blockPosition().getY() - 2;
 		} else if (MC.player.onGround()) {
 			if (MC.options.keyJump.isDown()) {

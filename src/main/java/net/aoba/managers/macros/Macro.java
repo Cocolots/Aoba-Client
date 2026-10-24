@@ -15,6 +15,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import net.aoba.managers.macros.actions.MacroEvent;
 import net.minecraft.client.Minecraft;
+import net.aoba.utils.input.Keybind;
 
 /**
  * Represents a Macro that contains a list of events.
@@ -24,7 +25,7 @@ public class Macro {
 	private String filePath;
 	private LinkedList<MacroEvent> events;
 	private boolean looping = false;
-	private Key keybind = InputConstants.UNKNOWN;
+	private Keybind keybind = Keybind.from(InputConstants.UNKNOWN);
 
 	public Macro() {
 	}
@@ -39,7 +40,7 @@ public class Macro {
 		this.looping = looping;
 	}
 
-	public Macro(LinkedList<MacroEvent> events, boolean looping, Key keybind) {
+	public Macro(LinkedList<MacroEvent> events, boolean looping, Keybind keybind) {
 		this.events = events;
 		this.looping = looping;
 		this.keybind = keybind;
@@ -100,7 +101,7 @@ public class Macro {
 	 * Getter for the keybind assigned to this Macro.
 	 * @return The assigned keybind.
 	 */
-	public Key getKeybind() {
+	public Keybind getKeybind() {
 		return this.keybind;
 	}
 
@@ -108,7 +109,7 @@ public class Macro {
 	 * Setter for the keybind assigned to this Macro.
 	 * @param keybind The Key to assign.
 	 */
-	public void setKeybind(Key keybind) {
+	public void setKeybind(Keybind keybind) {
 		this.keybind = keybind;
 	}
 

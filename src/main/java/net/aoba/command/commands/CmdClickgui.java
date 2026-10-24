@@ -12,6 +12,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.aoba.Aoba;
 import net.aoba.command.Command;
 import net.aoba.command.InvalidSyntaxException;
+import net.aoba.utils.input.Keybind;
 
 public class CmdClickgui extends Command {
 
@@ -26,7 +27,7 @@ public class CmdClickgui extends Command {
                 if (parameters.length != 2)
                     throw new InvalidSyntaxException(this);
                 char keybind = Character.toUpperCase(parameters[1].charAt(0));
-                Aoba.getInstance().guiManager.clickGuiButton.setValue(InputConstants.Type.KEYBOARD.getOrCreate((int) keybind));
+                Aoba.getInstance().guiManager.clickGuiButton.setValue(Keybind.from(InputConstants.Type.KEYBOARD.getOrCreate((int) keybind)));
                 break;
             case "open":
                 Aoba.getInstance().guiManager.setClickGuiOpen(true);

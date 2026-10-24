@@ -17,6 +17,7 @@ import net.aoba.gui.UIElement;
 import net.aoba.gui.components.ButtonComponent;
 import net.aoba.gui.components.CheckboxComponent;
 import net.aoba.gui.components.EllipseComponent;
+import com.mojang.blaze3d.platform.InputConstants.Key;
 import net.aoba.gui.components.GridComponent;
 import net.aoba.gui.components.ItemsComponent;
 import net.aoba.gui.components.KeybindComponent;
@@ -40,6 +41,7 @@ import net.aoba.gui.types.GridDefinition.RelativeUnit;
 import net.aoba.managers.macros.Macro;
 import net.aoba.rendering.shaders.Shader;
 import net.aoba.rendering.utils.PolygonBank;
+import net.aoba.utils.input.Keybind;
 import net.aoba.gui.colors.Color;
 public class MacroWindow extends Window {
 	private ButtonComponent recordButton;
@@ -183,7 +185,7 @@ public class MacroWindow extends Window {
 
 		// Keybind Text
 		keybindComponent = new KeybindComponent();
-		keybindComponent.setProperty(KeybindComponent.SelectedKeyProperty, InputConstants.UNKNOWN);
+		keybindComponent.setProperty(KeybindComponent.SelectedKeyProperty, Keybind.from(InputConstants.UNKNOWN));
 		keybindComponent.setProperty(KeybindComponent.HeaderProperty, "Macro Keybind");
 		keybindComponent.setOnChanged((key) -> {
 			if(currentMacro != null) 
@@ -235,8 +237,9 @@ public class MacroWindow extends Window {
 			if(macro.isLooping())
 				macroNameText += " (Loop)";
 			
-			if(macro.getKeybind() != InputConstants.UNKNOWN)
-				macroNameText += " [" + macro.getKeybind().getDisplayName().getString() + "]";
+			Key key = macro.getKeybind().getKey();
+			if(key != InputConstants.UNKNOWN)
+				macroNameText += " [" + key.getDisplayName().getString() + "]";
 			
 			StringComponent text = new StringComponent(macroNameText);
 			text.setProperty(UIElement.IsHitTestVisibleProperty, true);

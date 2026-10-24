@@ -16,6 +16,8 @@ import java.util.Objects;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.InputConstants.Key;
+
 import net.aoba.Aoba;
 import net.aoba.AobaClient;
 import net.aoba.event.events.KeyDownEvent;
@@ -83,6 +85,7 @@ import net.aoba.settings.types.FontSetting;
 import net.aoba.settings.types.KeybindSetting;
 import net.aoba.utils.input.CursorStyle;
 import net.aoba.utils.input.Input;
+import net.aoba.utils.input.Keybind;
 import net.aoba.rendering.Renderer2D;
 import net.aoba.rendering.shaders.Shader;
 import net.minecraft.client.KeyMapping;
@@ -95,7 +98,7 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	private static final Minecraft MC = Minecraft.getInstance();
 	
 	public KeybindSetting clickGuiButton = KeybindSetting.builder().id("key.clickgui").displayName("ClickGUI Key")
-			.defaultValue(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_RSHIFT)).build();
+			.defaultValue(Keybind.from(InputConstants.KEY_RSHIFT)).build();
 	
 	private static CursorStyle currentCursor = CursorStyle.Default;
 	private static String tooltip = null;
@@ -141,10 +144,18 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 			.displayName("UI Panel Border Color").description("Accent color of the background.")
 			.defaultValue(Shader.solid(new Color(100, 100, 100, 100))).build();
 
+	public static ShaderSetting componentBackgroundColor = ShaderSetting.builder().id("ui_component_background_color")
+			.displayName("UI Component Background Color").description("Background colors of components (i.e TextBox).")
+			.defaultValue(Shader.solid(new Color(20, 20, 20, 95))).build();
+	
+	public static ShaderSetting componentHoveredBackgroundColor = ShaderSetting.builder().id("ui_component_hover_background_color")
+			.displayName("UI Component Hovered Background Color").description("Background colors of components (i.e TextBox) when hovered.")
+			.defaultValue(Shader.solid(new Color(50, 50, 50, 150))).build();
+	
 	public static ShaderSetting componentBorderColor = ShaderSetting.builder().id("ui_component_border_color")
 			.displayName("UI Component Border Color").description("Background colors of components (i.e TextBox).")
 			.defaultValue(Shader.solid(new Color(115, 115, 115, 200))).build();
-
+	
 	public static ShaderSetting windowBackgroundColor = ShaderSetting.builder().id("ui_window_background_color")
 			.displayName("UI Background Color").description("Color of the background.")
 			.defaultValue(Shader.blur(new Color(55, 55, 55, 255), 60f, 5f)).build();
@@ -152,10 +163,6 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	public static ShaderSetting panelBackgroundColor = ShaderSetting.builder().id("ui_panel_background_color")
 			.displayName("UI Panel Background Color").description("Accent color of the background.")
 			.defaultValue(Shader.solid(new Color(90, 90, 90, 60))).build();
-
-	public static ShaderSetting componentBackgroundColor = ShaderSetting.builder().id("ui_component_background_color")
-			.displayName("UI Component Background Color").description("Background colors of components (i.e TextBox).")
-			.defaultValue(Shader.solid(new Color(20, 20, 20, 95))).build();
 
 	public static ShaderSetting buttonBackgroundColor = ShaderSetting.builder().id("ui_button_background_color")
 			.displayName("UI Button Background Color").description("Background color of buttons.")
@@ -165,6 +172,11 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 			.id("ui_button_hover_background_color").displayName("UI Button Hover Background Color")
 			.description("Background color of buttons when hovered.")
 			.defaultValue(Shader.gradient(new Color(210, 80, 255), new Color(130, 40, 190), 90f)).build();
+	
+	public static ShaderSetting buttonPressedBackgroundColor = ShaderSetting.builder()
+			.id("ui_button_pressed_background_color").displayName("UI Button Pressed Background Color")
+			.description("Background color of buttons when pressed.")
+			.defaultValue(Shader.gradient(new Color(150, 20, 195), new Color(70, 0, 130), 90f)).build();
 
 	public static ShaderSetting buttonBorderColor = ShaderSetting.builder().id("ui_button_border_color")
 			.displayName("UI Button Border Color").description("Border color of buttons.")
@@ -203,11 +215,13 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 		SettingManager.registerGlobalSetting(panelBorderColor);
 		SettingManager.registerGlobalSetting(panelBackgroundColor);
 		SettingManager.registerGlobalSetting(componentBackgroundColor);
+		SettingManager.registerGlobalSetting(componentHoveredBackgroundColor);
 		SettingManager.registerGlobalSetting(foregroundColor);
 		SettingManager.registerGlobalSetting(foregroundHeaderColor);
 		SettingManager.registerGlobalSetting(foregroundAccentColor);
 		SettingManager.registerGlobalSetting(buttonBackgroundColor);
 		SettingManager.registerGlobalSetting(buttonHoverBackgroundColor);
+		SettingManager.registerGlobalSetting(buttonPressedBackgroundColor);
 		SettingManager.registerGlobalSetting(buttonBorderColor);
 		SettingManager.registerGlobalSetting(roundingRadius);
 		SettingManager.registerGlobalSetting(lineThickness);
@@ -403,7 +417,8 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
-		if (clickGuiButton.getValue().getValue() == event.GetKey() && MC.gui.screen() == null && !isKeyboardInputActive) {
+		Keybind clickguiKeybind = clickGuiButton.getValue();
+		if (clickguiKeybind.getKeyCode() == event.GetKey() && MC.gui.screen() == null && !isKeyboardInputActive) {
 			setClickGuiOpen(!clickGuiOpen);
 			toggleMouse();
 		}
