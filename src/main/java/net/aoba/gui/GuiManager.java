@@ -459,10 +459,16 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 		Matrix3x2fStack matrixStack = drawContext.pose();
 		matrixStack.pushMatrix();
 
-		int guiScale = MC.getWindow().calculateScale(MC.options.guiScale().get(), MC.isEnforceUnicode());
-		matrixStack.scale(1.0f / guiScale, 1.0f / guiScale);
-
 		com.mojang.blaze3d.platform.Window window = MC.getWindow();
+
+		// The UI is laid out in window (screen) coordinates, which is the same space GLFW
+		// reports the mouse in. On HiDPI displays (e.g. macOS Retina) the framebuffer is
+		// larger than the window, so scale from screen coordinates to framebuffer pixels
+		// before dividing out the GUI scale. Otherwise rendering and mouse input disagree.
+		int guiScale = window.getGuiScale();
+		float pixelRatio = window.getScreenWidth() > 0 ? (float) window.getWidth() / window.getScreenWidth() : 1.0f;
+		float uiScale = pixelRatio / guiScale;
+		matrixStack.scale(uiScale, uiScale);
 		// Render ClickGUI and Topbar
 		if (clickGuiOpen) {
 			renderer.drawBox(0, 0, window.getScreenWidth(), window.getScreenHeight(),
