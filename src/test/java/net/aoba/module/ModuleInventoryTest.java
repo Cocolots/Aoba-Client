@@ -47,4 +47,29 @@ class ModuleInventoryTest {
 		assertThat(result.slot()).isZero();
 		assertThat(result.count()).isEqualTo(36);
 	}
+
+	@Test
+	void emptyContainerDoesNotInvokeSlotGetter() {
+		FindItemResult result = Module.findInSlots(0, 0, 10, ignored -> {
+			throw new AssertionError("No slot should be read");
+		}, item -> true, ignored -> 1);
+
+		assertThat(result.found()).isFalse();
+		assertThat(result.count()).isZero();
+	}
+
+	@Test
+	void missingPlayerMakesHotbarSearchSafe() {
+		FindItemResult result = Module.findInHotbar(stack -> true);
+
+		assertThat(result.found()).isFalse();
+		assertThat(result.slot()).isEqualTo(-1);
+	}
+
+	@Test
+	void missingPlayerMakesHandChecksAndSwapSafe() {
+		assertThat(Module.testInMainHand(stack -> true)).isFalse();
+		assertThat(Module.testInOffHand(stack -> true)).isFalse();
+		assertThat(Module.swap(0, true)).isFalse();
+	}
 }

@@ -144,6 +144,10 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 	}
 	
 	public Vec3 getViewVector() {
+		if (MC.player == null) {
+			return Vec3.ZERO;
+		}
+
 		float pitch;
 		float yaw;
 		
@@ -154,17 +158,7 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 			yaw = MC.player.getYRot();
 			pitch = MC.player.getXRot();
 		}
-		return calculateViewVector(yaw, pitch);
-	}
-	
-	private Vec3 calculateViewVector(float pitch, float yaw) {
-		float realXRot = yaw * (float) (Math.PI / 180.0);
-	      float realYRot = -pitch * (float) (Math.PI / 180.0);
-	      float yCos = Mth.cos(realYRot);
-	      float ySin = Mth.sin(realYRot);
-	      float xCos = Mth.cos(realXRot);
-	      float xSin = Mth.sin(realXRot);
-	      return new Vec3(ySin * xCos, -xSin, yCos * xCos);
+		return RotationMath.calculateViewVector(pitch, yaw);
 	}
 
 	private Rotation getRotationFromGoal(float startYaw, float startPitch, float partialTick, float frameDelta) {
@@ -247,6 +241,9 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		if (currentGoal.getRotationMode() == RotationMode.NONE)
 			return;
 
+		if (MC.player == null || MC.player.connection == null || serverYaw == null || serverPitch == null)
+			return;
+
 		// Fabricate our own packet.
 		event.cancel();
 
@@ -264,17 +261,17 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		boolean bl2 = g != 0.0 || h != 0.0;
 
 		if (bl && bl2) {
-			MC.getConnection().send(new ServerboundMovePlayerPacket.PosRot(MC.player.getX(), MC.player.getY(),
+			MC.player.connection.send(new ServerboundMovePlayerPacket.PosRot(MC.player.getX(), MC.player.getY(),
 					MC.player.getZ(), serverYaw, serverPitch, MC.player.onGround(), MC.player.horizontalCollision));
 		} else if (bl) {
-			MC.getConnection().send(new ServerboundMovePlayerPacket.Pos(MC.player.getX(), MC.player.getY(),
+			MC.player.connection.send(new ServerboundMovePlayerPacket.Pos(MC.player.getX(), MC.player.getY(),
 					MC.player.getZ(), MC.player.onGround(), MC.player.horizontalCollision));
 		} else if (bl2) {
-			MC.getConnection().send(new ServerboundMovePlayerPacket.Rot(serverYaw, serverPitch, MC.player.onGround(),
+			MC.player.connection.send(new ServerboundMovePlayerPacket.Rot(serverYaw, serverPitch, MC.player.onGround(),
 					MC.player.horizontalCollision));
 		} else if (iPlayer.getLastOnGround() != MC.player.onGround()
 				|| iPlayer.getLastHorizontalCollision() != MC.player.horizontalCollision) {
-			MC.getConnection().send(
+			MC.player.connection.send(
 					new ServerboundMovePlayerPacket.StatusOnly(MC.player.onGround(), MC.player.horizontalCollision));
 		}
 

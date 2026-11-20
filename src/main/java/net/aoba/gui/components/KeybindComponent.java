@@ -32,6 +32,7 @@ import net.aoba.utils.input.Keybind;
 
 public class KeybindComponent extends Component implements KeyDownListener {
 	private boolean listeningForKey;
+	private boolean synchronizingMomentary;
 	private final StringComponent label;
 	private final StringComponent keyTextComponent;
 	private final ToggleButtonComponent momentaryButton;
@@ -44,6 +45,13 @@ public class KeybindComponent extends Component implements KeyDownListener {
 	private static void OnSelectedKeyPropertyChanged(UIElement sender, Keybind oldValue, Keybind newValue) {
 		if(sender instanceof KeybindComponent keybind) {
 			keybind.keyTextComponent.setProperty(StringComponent.TextProperty, keybind.getKeyDisplayText());
+			keybind.synchronizingMomentary = true;
+			try {
+				keybind.momentaryButton.setProperty(CheckboxComponent.IsCheckedProperty,
+						newValue != null && newValue.getIsMomentary());
+			} finally {
+				keybind.synchronizingMomentary = false;
+			}
 			
 			if(keybind.onChanged != null)
 				keybind.onChanged.accept(newValue);
@@ -75,8 +83,13 @@ public class KeybindComponent extends Component implements KeyDownListener {
 		momentaryButton = new ToggleButtonComponent();
 		momentaryButton.setProperty(Component.VerticalAlignmentProperty, VerticalAlignment.Center);
 		momentaryButton.setOnChanged(e -> {
+			if (synchronizingMomentary) {
+				return;
+			}
 			Keybind keybind = this.getProperty(KeybindComponent.SelectedKeyProperty);
-			this.setProperty(KeybindComponent.SelectedKeyProperty, new Keybind(keybind.getKey(), e.booleanValue()));
+			if (keybind != null) {
+				this.setProperty(KeybindComponent.SelectedKeyProperty, new Keybind(keybind.getKey(), e.booleanValue()));
+			}
 		});
 		
 		momentaryButton.setProperty(UIElement.PaddingProperty, new Thickness(2f));
@@ -104,8 +117,16 @@ public class KeybindComponent extends Component implements KeyDownListener {
 		keyButton.setContent(keyTextComponent);
 
 		keyButton.setOnClicked(e -> {
-			if (e.button == MouseButton.LEFT && e.action == MouseAction.DOWN) {
+			if (e.action != MouseAction.DOWN) {
+				return;
+			}
+			if (e.button == MouseButton.LEFT) {
 				setListeningForKey(true);
+				e.cancel();
+			} else if (e.button == MouseButton.RIGHT) {
+				Keybind current = getProperty(SelectedKeyProperty);
+				setProperty(SelectedKeyProperty, new Keybind(InputConstants.UNKNOWN,
+						current != null && current.getIsMomentary()));
 				e.cancel();
 			}
 		});
@@ -116,7 +137,7 @@ public class KeybindComponent extends Component implements KeyDownListener {
 	
 	private String getKeyDisplayText() {
 		Keybind keybind = getProperty(SelectedKeyProperty);
-		if (keybind == null || keybind.getKey() == InputConstants.UNKNOWN)
+		if (keybind == null || keybind.getKey() == null || keybind.getKey() == InputConstants.UNKNOWN)
 			return "N/A";
 		return keybind.getKey().getDisplayName().getString();
 	}
@@ -142,11 +163,13 @@ public class KeybindComponent extends Component implements KeyDownListener {
 
 		listeningForKey = state;
 		if (listeningForKey) {
+			keyTextComponent.setProperty(StringComponent.TextProperty, "Press a key...");
 			GuiManager.requestFocus(this);
 			AOBA.eventManager.AddListener(KeyDownListener.class, this);
 		} else {
 			GuiManager.clearFocus(this);
 			AOBA.eventManager.RemoveListener(KeyDownListener.class, this);
+			keyTextComponent.setProperty(StringComponent.TextProperty, getKeyDisplayText());
 		}
 	}
 
@@ -154,7 +177,6 @@ public class KeybindComponent extends Component implements KeyDownListener {
 	protected void onLostFocus() {
 		if (listeningForKey) {
 			setListeningForKey(false);
-			keyTextComponent.setProperty(StringComponent.TextProperty, getKeyDisplayText());
 		}
 	}
 	

@@ -14,6 +14,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -174,7 +175,7 @@ public abstract class Module {
 	 * @return A {@link List} of {@link Setting} objects that belong to this module.
 	 */
 	public List<Setting<?>> getSettings() {
-		return settings;
+		return Collections.unmodifiableList(settings);
 	}
 
 	/**
@@ -364,6 +365,10 @@ public abstract class Module {
 	}
 
 	public static FindItemResult findInHotbar(Predicate<ItemStack> isGood) {
+		if (MC == null || MC.player == null) {
+			return new FindItemResult(-1, 0);
+		}
+
 		if (testInOffHand(isGood)) {
 			return new FindItemResult(45, MC.player.getOffhandItem().getCount());
 		}
@@ -414,6 +419,10 @@ public abstract class Module {
 	}
 
 	public static FindItemResult findFastestTool(BlockState state) {
+		if (MC == null || MC.player == null || state == null) {
+			return new FindItemResult(-1, 0);
+		}
+
 		float bestScore = 1;
 		int slot = -1;
 
@@ -434,14 +443,18 @@ public abstract class Module {
 	}
 
 	public static boolean testInMainHand(Predicate<ItemStack> predicate) {
-		return predicate.test(MC.player.getMainHandItem());
+		return MC != null && MC.player != null && predicate.test(MC.player.getMainHandItem());
 	}
 
 	public static boolean testInOffHand(Predicate<ItemStack> predicate) {
-		return predicate.test(MC.player.getOffhandItem());
+		return MC != null && MC.player != null && predicate.test(MC.player.getOffhandItem());
 	}
 
 	public static boolean swap(int slot, boolean swapBack) {
+		if (MC == null || MC.player == null || MC.gameMode == null) {
+			return false;
+		}
+
 		if (slot == 45) {
 			return true;
 		}

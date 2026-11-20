@@ -18,6 +18,7 @@ import net.aoba.utils.entity.EntityUtils;
 import net.aoba.utils.player.InteractionUtils;
 import net.aoba.utils.player.MiningController;
 import net.aoba.utils.player.MiningTarget;
+import net.aoba.utils.player.RotationGoalOwner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
@@ -86,7 +87,7 @@ public class Highway extends Module implements TickListener {
 
 	private final MiningController miner = MiningController.create(MC);
 	private HighwayDirection activeDirection = HighwayDirection.NORTH;
-	private boolean ownsRotationGoal;
+	private final RotationGoalOwner rotationOwner = new RotationGoalOwner();
 	private long lastPlacementTime;
 
 	public Highway() {
@@ -346,21 +347,17 @@ public class Highway extends Module implements TickListener {
 			return true;
 		}
 		Vec3 center = Vec3.atCenterOf(pos);
-		if (ownsRotationGoal && Aoba.getInstance().rotationManager.getGoal() instanceof Vec3dGoal goal
+		if (rotationOwner.isActive() && rotationOwner.getOwnedGoal() instanceof Vec3dGoal goal
 				&& center.equals(goal.getGoal())) {
 			return true;
 		}
-		Aoba.getInstance().rotationManager.setGoal(Vec3dGoal.builder().goal(center).mode(rotationMode.getValue())
+		rotationOwner.set(Vec3dGoal.builder().goal(center).mode(rotationMode.getValue())
 				.maxRotation(180f).fakeRotation(fakeRotation.getValue()).build());
-		ownsRotationGoal = true;
 		return false;
 	}
 
 	private void clearRotation() {
-		if (ownsRotationGoal) {
-			Aoba.getInstance().rotationManager.setGoal(null);
-			ownsRotationGoal = false;
-		}
+		rotationOwner.clear();
 	}
 
 	private void stopWithReason(String reason) {

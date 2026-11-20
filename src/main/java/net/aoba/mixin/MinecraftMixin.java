@@ -70,9 +70,6 @@ public abstract class MinecraftMixin {
 	private long aobaLastSubtickNanos;
 
 	@Shadow
-	public abstract boolean isWindowActive();
-
-	@Shadow
 	public abstract void delayCrash(CrashReport crashReport);
 
 	@Shadow
@@ -174,14 +171,4 @@ public abstract class MinecraftMixin {
     	}
     }
 
-	// TODO: InactivityFrameLimiter class... i guess.. :/
-	/*
-	 * @Inject(method = "getCurrentFps", at = @At("HEAD"), cancellable = true)
-	 * private void onGetCurrentFps(CallbackInfoReturnable<Integer> info) { if
-	 * (Aoba.getInstance().moduleManager != null) { FocusFps focusfps = (FocusFps)
-	 * Aoba.getInstance().moduleManager.focusfps; if (focusfps.state.getValue() &&
-	 * !isWindowFocused()) {
-	 * info.setReturnValue(Math.min(focusfps.getFps().intValue(),
-	 * this.options.getMaxFps().getValue())); } } }
-	 */
 }

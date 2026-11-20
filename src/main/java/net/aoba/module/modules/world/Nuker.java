@@ -35,6 +35,7 @@ import net.aoba.settings.types.ShaderSetting;
 import net.aoba.utils.player.MiningController;
 import net.aoba.utils.player.MiningPriority;
 import net.aoba.utils.player.MiningTarget;
+import net.aoba.utils.player.RotationGoalOwner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
@@ -78,7 +79,7 @@ public class Nuker extends Module implements Render3DListener, TickListener, Blo
 			.defaultValue(true).build();
 
 	private final MiningController miner = MiningController.create(MC);
-	private boolean ownsRotationGoal;
+	private final RotationGoalOwner rotationOwner = new RotationGoalOwner();
 
 	public Nuker() {
 		super("Nuker");
@@ -197,22 +198,18 @@ public class Nuker extends Module implements Render3DListener, TickListener, Blo
 		}
 
 		Vec3 center = Vec3.atCenterOf(pos);
-		if (ownsRotationGoal && Aoba.getInstance().rotationManager.getGoal() instanceof Vec3dGoal goal
+		if (rotationOwner.isActive() && rotationOwner.getOwnedGoal() instanceof Vec3dGoal goal
 				&& center.equals(goal.getGoal())) {
 			return true;
 		}
 
-		Aoba.getInstance().rotationManager.setGoal(Vec3dGoal.builder().goal(center).mode(rotationMode.getValue())
+		rotationOwner.set(Vec3dGoal.builder().goal(center).mode(rotationMode.getValue())
 				.maxRotation(maxRotation.getValue()).fakeRotation(fakeRotation.getValue()).build());
-		ownsRotationGoal = true;
 		return false;
 	}
 
 	private void clearRotation() {
-		if (ownsRotationGoal) {
-			Aoba.getInstance().rotationManager.setGoal(null);
-			ownsRotationGoal = false;
-		}
+		rotationOwner.clear();
 	}
 
 	@Override
