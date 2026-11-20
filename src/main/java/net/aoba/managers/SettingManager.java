@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -105,6 +106,19 @@ public class SettingManager {
 		Collections.sort(configNames);
 	}
 
+	static File getConfigFile(File settingsFolder, String configName) throws IOException {
+		try {
+			File canonicalFolder = settingsFolder.getCanonicalFile();
+			File configFile = new File(canonicalFolder, configName + ".xml").getCanonicalFile();
+			if (!configFile.toPath().startsWith(canonicalFolder.toPath())) {
+				throw new IOException("Config file must be inside the settings directory.");
+			}
+			return configFile;
+		} catch (InvalidPathException e) {
+			throw new IOException("Invalid config file path.", e);
+		}
+	}
+
 	/**
 	 * Saves the current settings profile to the disk (usually on shutdown)
 	 * 
@@ -129,7 +143,7 @@ public class SettingManager {
 			LogUtils.getLogger().info("Saving config " + configName + ".");
 			Properties config = new Properties();
 			fillProperties(config, settings);
-			try (FileOutputStream out = new FileOutputStream(settingsFolder.getPath() + File.separator + configName + ".xml")) {
+			try (FileOutputStream out = new FileOutputStream(getConfigFile(settingsFolder, configName))) {
 				config.storeToXML(out, null);
 			}
 		}
@@ -154,7 +168,7 @@ public class SettingManager {
 			LogUtils.getLogger().info("Saving config " + fileName + ".");
 			Properties config = new Properties();
 			fillProperties(config, settings);
-			try (FileOutputStream out = new FileOutputStream(settingsFolder.getPath() + File.separator + fileName + ".xml")) {
+			try (FileOutputStream out = new FileOutputStream(getConfigFile(settingsFolder, fileName))) {
 				config.storeToXML(out, null);
 			}
 		}
@@ -298,8 +312,8 @@ public class SettingManager {
 
 			// Load config from file.
 			Properties config = new Properties();
-			try (FileInputStream fis = new FileInputStream(MC.gameDirectory + File.separator + "aoba" + File.separator
-					+ "settings" + File.separator + configName + ".xml")) {
+			File settingsFolder = new File(MC.gameDirectory + File.separator + "aoba" + File.separator + "settings");
+			try (FileInputStream fis = new FileInputStream(getConfigFile(settingsFolder, configName))) {
 				config.loadFromXML(fis);
 			} catch (InvalidPropertiesFormatException e) {
 				LogUtils.getLogger().error("Invalid XML format in properties file: " + e.getMessage());
@@ -385,8 +399,12 @@ public class SettingManager {
 						String[] ids = value.split(",");
 						HashSet<Block> result = new HashSet<Block>();
 						for (String str : ids) {
+							if (str.isEmpty())
+								continue;
 							Identifier i = Identifier.parse(str);
-							result.add(BuiltInRegistries.BLOCK.getValue(i));
+							Block block = BuiltInRegistries.BLOCK.getOptional(i)
+									.orElseThrow(() -> new IllegalArgumentException("Unknown block ID: " + i));
+							result.add(block);
 						}
 						setting.setValue(result);
 					}
@@ -397,7 +415,9 @@ public class SettingManager {
 							if (str.isEmpty())
 								continue;
 							Identifier i = Identifier.parse(str);
-							result.add(BuiltInRegistries.ENTITY_TYPE.getValue(i));
+							EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(i)
+									.orElseThrow(() -> new IllegalArgumentException("Unknown entity ID: " + i));
+							result.add(entityType);
 						}
 						setting.setValue(result);
 					}

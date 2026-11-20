@@ -8,7 +8,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -61,7 +61,7 @@ final class ScaffoldBlockSelector {
 
 		Block block = blockItem.getBlock();
 		if (disallowed.contains(block) || avoidFallingBlocks && block instanceof FallingBlock
-				|| avoidEntityBlocks && block instanceof BaseEntityBlock) {
+				|| avoidEntityBlocks && block instanceof EntityBlock) {
 			return -1;
 		}
 
@@ -71,7 +71,7 @@ final class ScaffoldBlockSelector {
 		}
 
 		int score = stack.getCount();
-		if (!(block instanceof BaseEntityBlock)) {
+		if (!(block instanceof EntityBlock)) {
 			score += 32;
 		}
 		if (preferFullBlocks && state.isCollisionShapeFullBlock(level, net.minecraft.core.BlockPos.ZERO)) {
