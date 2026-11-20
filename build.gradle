@@ -66,6 +66,16 @@ test {
     }
 }
 
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "aoba-gametest"
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
 loom {
 	accessWidenerPath = file("src/main/resources/aoba.accesswidener")
 }
