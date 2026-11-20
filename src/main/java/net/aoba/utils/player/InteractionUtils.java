@@ -40,6 +40,9 @@ public class InteractionUtils {
 	 * @return BlockHitResult if a ray collision occured, null otherwise.
 	 */
 	public static BlockHitResult raycastBlock(BlockPos targetBlock) {
+		if (MC.player == null || MC.level == null)
+			return null;
+
 		RotationManager rotationManager = Aoba.getInstance().rotationManager;
 		Vec3 eye = MC.player.getEyePosition();
 		Vec3 lookVector = rotationManager.getViewVector();
@@ -64,7 +67,7 @@ public class InteractionUtils {
 	 */
 	public static BlockHitResult raycastBlock(BlockPos targetBlock, Direction face) {
 		BlockHitResult ray = raycastBlock(targetBlock);
-		if (ray.getDirection() != face)
+		if (ray == null || ray.getDirection() != face)
 			return null;
 		return ray;
 	}
@@ -74,6 +77,9 @@ public class InteractionUtils {
 	}
 
 	public static EntityHitResult raycastEntity(Predicate<Entity> filter, double reach) {
+		if (MC.player == null || MC.level == null)
+			return null;
+
 		RotationManager rotationManager = Aoba.getInstance().rotationManager;
 		Vec3 eye = MC.player.getEyePosition();
 		Vec3 lookVector = rotationManager.getViewVector();

@@ -147,8 +147,8 @@ public class RotationManager implements TickListener, Render3DListener, SendPack
 		float pitch;
 		float yaw;
 		
-		if (currentGoal.isFakeRotation()) {
-			yaw =  serverYaw;
+		if (currentGoal != null && currentGoal.isFakeRotation() && serverYaw != null && serverPitch != null) {
+			yaw = serverYaw;
 			pitch = serverPitch;
 		} else {
 			yaw = MC.player.getYRot();

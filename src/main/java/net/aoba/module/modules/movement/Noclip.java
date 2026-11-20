@@ -103,8 +103,11 @@ public class Noclip extends Module implements TickListener {
 	@Override
 	public void onTick(Pre event) {
 		LocalPlayer player = MC.player;
+		if (player == null) {
+			return;
+		}
 
-		float speed = flySpeed.getDefaultValue();
+		float speed = flySpeed.getValue();
 
 		if (MC.options.keySprint.isDown()) {
 			speed *= speedMultiplier.getValue();

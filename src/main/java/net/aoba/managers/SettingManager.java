@@ -46,6 +46,7 @@ public class SettingManager {
 	public final static List<String> configNames = new ArrayList<String>();
 
 	public SettingManager() {
+		registerGlobalSetting(currentConfig);
 		refreshSettingFiles();
 	}
 
@@ -74,25 +75,34 @@ public class SettingManager {
 		}
 	}
 
+	public static String getCurrentConfig() {
+		return currentConfig.getValue();
+	}
+
 	/**
 	 * Rescans the %appdata%\.minecraft\aoba\settings directory for settings XML
 	 * files.
 	 */
 	public static void refreshSettingFiles() {
-		File settingsDirecotry = new File(MC.gameDirectory + File.separator + "aoba" + File.separator + "settings");
+		configNames.clear();
+		configNames.add("default");
 
-		if (settingsDirecotry.exists() && settingsDirecotry.isDirectory()) {
-			LogUtils.getLogger().info("Found Settings Directory: " + settingsDirecotry.getAbsolutePath());
-			File[] files = settingsDirecotry.listFiles((dir, name) -> name.endsWith(".xml"));
+		File settingsDirectory = new File(MC.gameDirectory + File.separator + "aoba" + File.separator + "settings");
+
+		if (settingsDirectory.exists() && settingsDirectory.isDirectory()) {
+			LogUtils.getLogger().info("Found Settings Directory: " + settingsDirectory.getAbsolutePath());
+			File[] files = settingsDirectory.listFiles((dir, name) -> name.endsWith(".xml"));
 
 			if (files != null) {
 				for (File file : files) {
 					String name = file.getName().replace(".xml", "");
-					if (!name.equals("globals"))
+					if (!name.equals("globals") && !configNames.contains(name))
 						configNames.add(name);
 				}
 			}
 		}
+
+		Collections.sort(configNames);
 	}
 
 	/**

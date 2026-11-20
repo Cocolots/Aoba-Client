@@ -179,6 +179,12 @@ public class KillAura extends Module implements SubtickListener, TickListener {
 
 	@Override
 	public void onSubtick(SubtickEvent event) {
+		if (MC.player == null || MC.level == null) {
+			entityToAttack = null;
+			Aoba.getInstance().rotationManager.setGoal(null);
+			return;
+		}
+
 		timeSinceAttackMs += event.getDelta();
 
 		float partialTick = MC.getDeltaTracker().getGameTimeDeltaPartialTick(true);
@@ -239,6 +245,9 @@ public class KillAura extends Module implements SubtickListener, TickListener {
 
 	@Override
 	public void onTick(TickEvent.Pre event) {
+		if (MC.player == null || MC.level == null)
+			return;
+
 		if (triggerOnClick.getValue() && !MC.options.keyAttack.isDown())
 			return;
 
@@ -258,8 +267,10 @@ public class KillAura extends Module implements SubtickListener, TickListener {
 			if (ray != null && ray.getType() == HitResult.Type.ENTITY) {
 				EntityHitResult entityResult = (EntityHitResult) ray;
 				Entity ent = entityResult.getEntity();
-				InteractionUtils.attack(ent);
-				attacked = true;
+				if (ent == target && ent.isAlive() && !ent.isRemoved()) {
+					InteractionUtils.attack(ent);
+					attacked = true;
+				}
 			}
 		} else {
 			InteractionUtils.attack(target);

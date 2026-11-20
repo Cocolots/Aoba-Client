@@ -15,7 +15,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import net.aoba.Aoba;
 import net.aoba.AobaClient;
 import net.aoba.interfaces.IMultiPlayerGameMode;
@@ -375,29 +377,36 @@ public abstract class Module {
 	}
 
 	public static FindItemResult find(Predicate<ItemStack> isGood) {
-		if (MC.player == null) {
-			return new FindItemResult(0, 0);
+		if (MC == null || MC.player == null) {
+			return new FindItemResult(-1, 0);
 		}
 
-		return find(isGood, 0, MC.player.getInventory().getContainerSize());
+		return find(isGood, 0, MC.player.getInventory().getContainerSize() - 1);
 	}
 
 	public static FindItemResult find(Predicate<ItemStack> isGood, int start, int end) {
-		if (MC.player == null) {
-			return new FindItemResult(0, 0);
+		if (MC == null || MC.player == null) {
+			return new FindItemResult(-1, 0);
 		}
 
+		return findInSlots(MC.player.getInventory().getContainerSize(), start, end,
+				MC.player.getInventory()::getItem, isGood, ItemStack::getCount);
+	}
+
+	static <T> FindItemResult findInSlots(int containerSize, int start, int end, IntFunction<T> slotGetter,
+			Predicate<T> isGood, ToIntFunction<T> countFunction) {
 		int slot = -1;
 		int count = 0;
+		int firstSlot = Math.max(0, start);
+		int lastSlot = Math.min(end, containerSize - 1);
 
-		for (int i = start; i <= end; i++) {
-			ItemStack stack = MC.player.getInventory().getItem(i);
-
+		for (int i = firstSlot; i <= lastSlot; i++) {
+			T stack = slotGetter.apply(i);
 			if (isGood.test(stack)) {
 				if (slot == -1) {
 					slot = i;
 				}
-				count += stack.getCount();
+				count += countFunction.applyAsInt(stack);
 			}
 		}
 

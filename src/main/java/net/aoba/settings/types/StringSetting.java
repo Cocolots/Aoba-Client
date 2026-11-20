@@ -15,7 +15,7 @@ import net.aoba.settings.Setting;
 public class StringSetting extends Setting<String> {
 	protected StringSetting(String ID, String displayName, String description, String default_value,
 			Consumer<String> onUpdate) {
-		super(ID, description, default_value, onUpdate);
+		super(ID, displayName, description, default_value, onUpdate);
 		type = TYPE.STRING;
 	}
 

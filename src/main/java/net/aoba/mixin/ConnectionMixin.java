@@ -51,12 +51,25 @@ public abstract class ConnectionMixin {
 	protected void onChannelRead(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
 		ReceivePacketEvent event = new ReceivePacketEvent(packet);
 		Aoba.getInstance().eventManager.Fire(event);
+		if (event.isCancelled()) {
+			ci.cancel();
+		}
 	}
 
 	@Inject(at = @At("HEAD"), method = "send(Lnet/minecraft/network/protocol/Packet;)V", cancellable = true)
 	private void onSend(Packet<?> packet, CallbackInfo ci) {
 		SendPacketEvent event = new SendPacketEvent(packet);
 		Aoba.getInstance().eventManager.Fire(event);
+
+		if (event.isCancelled()) {
+			ci.cancel();
+			return;
+		}
+		if (event.GetPacket() != packet) {
+			ci.cancel();
+			send(event.GetPacket());
+			return;
+		}
 
 		// We need to send a matching TickEnd packet with a move packet
 		// or else we will get kicked from the game.
@@ -72,13 +85,6 @@ public abstract class ConnectionMixin {
 			}
 
 			hasTickSentPosition = true;
-		}
-		
-		if (event.isCancelled()) {
-			ci.cancel();
-		} else if (event.GetPacket() != packet) {
-			ci.cancel();
-			send(event.GetPacket());
 		}
 	}
 
