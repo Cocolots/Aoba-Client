@@ -8,57 +8,60 @@
 
 package net.aoba.command.commands;
 
+import java.util.List;
+
 import net.aoba.Aoba;
 import net.aoba.command.Command;
+import net.aoba.command.HelpPage;
+import net.aoba.command.InvalidSyntaxException;
 import net.aoba.managers.CommandManager;
-import org.apache.commons.lang3.StringUtils;
-import java.util.ArrayList;
 
 public class CmdHistory extends Command {
+	private static final int HISTORY_PER_PAGE = 7;
 
-    private static final int HISTORY_PER_PAGE = 5;
+	public CmdHistory() {
+		super("history", "Shows or clears command history.", "[page, clear]");
+	}
 
-    public CmdHistory() {
-        super("history", "Shows the command history.", "[page]");
-    }
+	@Override
+	public void runCommand(String[] parameters) throws InvalidSyntaxException {
+		if (parameters.length == 0) {
+			showHistory(1);
+			return;
+		}
+		if (parameters.length > 1) {
+			throw new InvalidSyntaxException(this);
+		}
+		if (parameters[0].equalsIgnoreCase("clear")) {
+			Aoba.getInstance().commandManager.clearCommandHistory();
+			CommandManager.sendChatMessage("Command history cleared.");
+			return;
+		}
+		try {
+			showHistory(Integer.parseInt(parameters[0]));
+		} catch (NumberFormatException e) {
+			throw new InvalidSyntaxException(this);
+		}
+	}
 
-    @Override
-    public void runCommand(String[] parameters) {
-        if (parameters.length == 0) {
-            showHistory(1);
-        } else if (StringUtils.isNumeric(parameters[0])) {
-            int page = Integer.parseInt(parameters[0]);
-            showHistory(page);
-        } else {
-            CommandManager.sendChatMessage("Invalid parameter. Usage: .aoba history [page]");
-        }
-    }
+	private void showHistory(int requestedPage) {
+		List<String> history = Aoba.getInstance().commandManager.getCommandHistory();
+		HelpPage<String> page = HelpPage.of(history, requestedPage, HISTORY_PER_PAGE);
+		CommandManager.sendChatMessage("------------ Command History [Page " + page.page() + " of "
+				+ page.pageCount() + "] ------------");
+		if (page.entries().isEmpty()) {
+			CommandManager.sendChatMessage("No command history.");
+			return;
+		}
 
-    private void showHistory(int page) {
-        CommandManager cm = Aoba.getInstance().commandManager;
-        ArrayList<String> history = new ArrayList<>(cm.getCommandHistory());
-        int totalPages = (int) Math.ceil((double) history.size() / HISTORY_PER_PAGE);
+		int firstEntry = (page.page() - 1) * HISTORY_PER_PAGE;
+		for (int index = 0; index < page.entries().size(); index++) {
+			CommandManager.sendChatMessage(firstEntry + index + 1 + ": " + page.entries().get(index));
+		}
+	}
 
-        if (page < 1 || page > totalPages) {
-            CommandManager.sendChatMessage("Page " + page + " does not exist. There are only " + totalPages + " pages.");
-            return;
-        }
-
-        String title = "------------ Command History [Page " + page + " of " + totalPages + "] ------------";
-        CommandManager.sendChatMessage(title);
-
-        int startIndex = (page - 1) * HISTORY_PER_PAGE;
-        int endIndex = Math.min(startIndex + HISTORY_PER_PAGE, history.size());
-
-        for (int i = startIndex; i < endIndex; i++) {
-            CommandManager.sendChatMessage((i + 1) + ": " + history.get(i));
-        }
-
-        CommandManager.sendChatMessage("-".repeat(title.length() - 2)); // Adjust for Minecraft font width
-    }
-
-    @Override
-    public String[] getAutocorrect(String previousParameter) {
-        return new String[0]; // No autocorrect needed for history command
-    }
+	@Override
+	public String[] getAutocorrect(String previousParameter) {
+		return new String[] { "clear" };
+	}
 }

@@ -63,7 +63,7 @@ public class AutoTool extends Module implements BlockStateListener, TickListener
 
     @Override
     public void onTick(Pre event) {
-        if (MC.player == null || MC.hitResult == null) 
+        if (MC.player == null || MC.level == null || MC.hitResult == null)
         	return;
 
         HitResult ray = MC.hitResult;
@@ -81,14 +81,14 @@ public class AutoTool extends Module implements BlockStateListener, TickListener
 
         if (miningOnly.getValue()) {
             if (isMining) {
-                if (bestSlot >= 0 && bestSlot <= 9 && bestSlot != currentSlot) {
+                if (bestSlot >= 0 && bestSlot <= 8 && bestSlot != currentSlot) {
                     swap(bestSlot, swapBack.getValue());
                 }
             } else {
                 if (swapBack.getValue()) swapBack();
             }
         } else {
-            if (bestSlot >= 0 && bestSlot <= 9 && bestSlot != currentSlot) {
+            if (bestSlot >= 0 && bestSlot <= 8 && bestSlot != currentSlot) {
                 swap(bestSlot, swapBack.getValue());
             }
         }

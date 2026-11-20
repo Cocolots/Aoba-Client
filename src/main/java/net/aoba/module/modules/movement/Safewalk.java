@@ -14,7 +14,6 @@ import net.aoba.event.events.TickEvent.Pre;
 import net.aoba.event.listeners.TickListener;
 import net.aoba.module.Category;
 import net.aoba.module.Module;
-import net.minecraft.world.phys.Vec3;
 
 public class Safewalk extends Module implements TickListener {
 
@@ -26,6 +25,7 @@ public class Safewalk extends Module implements TickListener {
 
 	@Override
 	public void onDisable() {
+		MC.options.keyShift.setDown(false);
 		Aoba.getInstance().eventManager.RemoveListener(TickListener.class, this);
 	}
 
@@ -41,49 +41,9 @@ public class Safewalk extends Module implements TickListener {
 
 	@Override
 	public void onTick(Pre event) {
-		double x = MC.player.getDeltaMovement().x;
-		double y = MC.player.getDeltaMovement().y;
-		double z = MC.player.getDeltaMovement().z;
-		if (MC.player.onGround()) {
-			double increment;
-			for (increment = 0.05D; x != 0.0D;) {
-				if (x < increment && x >= -increment) {
-					x = 0.0D;
-				} else if (x > 0.0D) {
-					x -= increment;
-				} else {
-					x += increment;
-				}
-			}
-            while (z != 0.0D)
-            {
-                if (z < increment && z >= -increment) {
-                    z = 0.0D;
-                } else if (z > 0.0D) {
-                    z -= increment;
-                } else {
-                    z += increment;
-                }
-            }
-            while (x != 0.0D && z != 0.0D)
-            {
-                if (x < increment && x >= -increment) {
-                    x = 0.0D;
-                } else if (x > 0.0D) {
-                    x -= increment;
-                } else {
-                    x += increment;
-                }
-                if (z < increment && z >= -increment) {
-                    z = 0.0D;
-                } else if (z > 0.0D) {
-                    z -= increment;
-                } else {
-                    z += increment;
-                }
-            }
-        }
-		MC.player.setDeltaMovement(new Vec3(x, y, z));
+		if (MC.player != null) {
+			MC.options.keyShift.setDown(true);
+		}
 	}
 
 	@Override

@@ -10,34 +10,37 @@ package net.aoba.module.modules.misc;
 import net.aoba.Aoba;
 import net.aoba.event.events.ItemUsedEvent;
 import net.aoba.event.events.ReceivePacketEvent;
+import net.aoba.event.events.TickEvent.Post;
+import net.aoba.event.events.TickEvent.Pre;
 import net.aoba.event.listeners.ItemUsedListener;
 import net.aoba.event.listeners.ReceivePacketListener;
+import net.aoba.event.listeners.TickListener;
 import net.aoba.mixin.interfaces.IClientboundBossEventPacket;
 import net.aoba.module.Category;
 import net.aoba.module.Module;
 import net.aoba.settings.types.BooleanSetting;
 import net.aoba.utils.FindItemResult;
+import net.aoba.utils.player.ConsumableSession;
+import net.aoba.utils.player.InteractionUtils;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundBossEventPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-public class AutoOminousBottle extends Module implements ReceivePacketListener, ItemUsedListener {
-	private ItemStack lastUsedItemStack = null;
-	private int previousSlot = -1;
+public class AutoOminousBottle extends Module implements ReceivePacketListener, ItemUsedListener, TickListener {
+	private static final long USE_TIMEOUT_MS = 10_000;
+
+	private final ConsumableSession session = new ConsumableSession();
+	private ItemStack lastUsedItemStack;
 
 	private final BooleanSetting swapBack = BooleanSetting.builder().id("auto_ominous_bottle_swap_back")
-			.displayName("Swap Back")
-			.description(
-					"Whether the player's slot will be switched back to their previous slot after drinking the potion.")
+			.displayName("Swap Back").description("Restores the selected slot after drinking the bottle")
 			.defaultValue(true).build();
 
 	public AutoOminousBottle() {
 		super("AutoOminous");
-
 		setCategory(Category.of("Misc"));
-		setDescription("Automatically drinks a ominous potion when a raid ends.");
-
+		setDescription("Automatically drinks an ominous bottle when a boss bar is removed.");
 		addSetting(swapBack);
 	}
 
@@ -45,61 +48,87 @@ public class AutoOminousBottle extends Module implements ReceivePacketListener, 
 	public void onDisable() {
 		Aoba.getInstance().eventManager.RemoveListener(ReceivePacketListener.class, this);
 		Aoba.getInstance().eventManager.RemoveListener(ItemUsedListener.class, this);
+		Aoba.getInstance().eventManager.RemoveListener(TickListener.class, this);
+		stopSession(false);
 	}
 
 	@Override
 	public void onEnable() {
 		Aoba.getInstance().eventManager.AddListener(ReceivePacketListener.class, this);
 		Aoba.getInstance().eventManager.AddListener(ItemUsedListener.class, this);
+		Aoba.getInstance().eventManager.AddListener(TickListener.class, this);
 	}
 
 	@Override
 	public void onToggle() {
-
 	}
 
 	@Override
-	public void onReceivePacket(ReceivePacketEvent e) {
-		// TODO: This will trigger on any boss bar...
-		// Figure out a way to make it only occur on Raids
-
-		Packet<?> packet = e.GetPacket();
-		if (packet instanceof ClientboundBossEventPacket bossPacket) {
-			IClientboundBossEventPacket iPacket = (IClientboundBossEventPacket) bossPacket;
-			ClientboundBossEventPacket.Operation action = iPacket.getAction();
-			if (action.getType() == ClientboundBossEventPacket.OperationType.REMOVE) {
-				FindItemResult result = findInHotbar(Items.OMINOUS_BOTTLE);
-				if (result.found()) {
-					if (swapBack.getValue()) {
-						previousSlot = MC.player.getInventory().getSelectedSlot();
-					}
-
-					int slot = result.slot();
-					MC.player.getInventory().setSelectedSlot(slot);
-					lastUsedItemStack = MC.player.getInventory().getItem(slot);
-					MC.options.keyUse.setDown(true);
-				}
-			}
+	public void onReceivePacket(ReceivePacketEvent event) {
+		Packet<?> packet = event.GetPacket();
+		if (!(packet instanceof ClientboundBossEventPacket bossPacket) || MC.player == null || session.isActive()) {
+			return;
 		}
+
+		IClientboundBossEventPacket accessor = (IClientboundBossEventPacket) bossPacket;
+		if (accessor.getAction().getType() != ClientboundBossEventPacket.OperationType.REMOVE) {
+			return;
+		}
+
+		FindItemResult result = findInHotbar(Items.OMINOUS_BOTTLE);
+		if (!result.found()) {
+			return;
+		}
+
+		int selectedSlot = MC.player.getInventory().getSelectedSlot();
+		if (!session.start(selectedSlot, result.slot(), System.currentTimeMillis())) {
+			return;
+		}
+		if (!result.isOffhand() && !result.isMainHand() && !swap(result.slot(), false)) {
+			session.clear();
+			return;
+		}
+
+		lastUsedItemStack = (result.isOffhand() ? MC.player.getOffhandItem()
+				: MC.player.getInventory().getItem(result.slot())).copy();
+		MC.options.keyUse.setDown(true);
 	}
 
 	@Override
 	public void onItemUsed(ItemUsedEvent.Pre event) {
-
 	}
 
 	@Override
 	public void onItemUsed(ItemUsedEvent.Post event) {
-		if (lastUsedItemStack != null) {
-			if (lastUsedItemStack == event.getItemStack()) {
-				MC.options.keyUse.setDown(false);
-				lastUsedItemStack = null;
+		if (lastUsedItemStack != null && ItemStack.isSameItem(event.getItemStack(), lastUsedItemStack)) {
+			stopSession(true);
+		}
+	}
 
-				if (swapBack.getValue() && previousSlot != -1) {
-					MC.player.getInventory().setSelectedSlot(previousSlot);
-					previousSlot = -1;
-				}
-			}
+	@Override
+	public void onTick(Pre event) {
+		if (MC.player == null || session.isExpired(System.currentTimeMillis(), USE_TIMEOUT_MS)) {
+			stopSession(MC.player != null);
+		}
+	}
+
+	@Override
+	public void onTick(Post event) {
+	}
+
+	private void stopSession(boolean restoreSlot) {
+		MC.options.keyUse.setDown(false);
+		lastUsedItemStack = null;
+		if (!session.isActive()) {
+			return;
+		}
+
+		int itemSlot = session.getItemSlot();
+		int previousSlot = session.getPreviousSlot();
+		session.stop();
+		if (restoreSlot && swapBack.getValue() && previousSlot >= 0 && itemSlot != InteractionUtils.OFFHAND
+				&& previousSlot != itemSlot && MC.player != null) {
+			swap(previousSlot, false);
 		}
 	}
 }

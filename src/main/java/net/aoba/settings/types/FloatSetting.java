@@ -33,8 +33,8 @@ public class FloatSetting extends Setting<Float> {
     @Override
     public void setValue(Float value) {
         float newValue = Math.max(min_value, Math.min(max_value, value));
-        int steps = Math.round((newValue) / step);
-        float actualNewValue = step * steps;
+        int steps = Math.round((newValue - min_value) / step);
+        float actualNewValue = Math.max(min_value, Math.min(max_value, min_value + step * steps));
         valueSqr = actualNewValue * actualNewValue;
         super.setValue(actualNewValue);
     }

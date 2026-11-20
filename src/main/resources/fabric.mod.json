@@ -9,11 +9,11 @@
 	],
 	"contact": {
 		"homepage": "https://aobaclient.com",
-		"sources": "https://github.com/coltonk9043/Aoba-Client",
-		"issues": "https://github.com/coltonk9043/Aoba-Client/issues",
-		"discord": "https://discord.gg/jEu6WfnyR6"
+		"sources": "https://github.com/Cocolots/Aoba-Client",
+		"issues": "https://github.com/Cocolots/Aoba-Client/issues",
+		"discord": "https://discord.gg/CDa4etPFtk"
 	},
-	"license": "CC0-1.0",
+	"license": "GPL-3.0",
 	"icon": "assets/aoba/icon.png",
 	"environment": "client",
 	"entrypoints": {

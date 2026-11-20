@@ -21,6 +21,8 @@ public class FocusFps extends Module {
 		super("FocusFPS");
 		setCategory(Category.of("Render"));
 		setDescription("Limits the FPS of the game when it is not focused.");
+		addSetting(fps);
+		state.setValue(true);
 	}
 
 	@Override
