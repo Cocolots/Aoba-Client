@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.aoba.Aoba;
-import net.aoba.managers.CommandManager;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 
@@ -37,8 +36,7 @@ public class ChatScreenMixin extends ScreenMixin {
 	@Inject(at = {
 			@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;addRecentChat(Ljava/lang/String;)V", shift = At.Shift.AFTER) }, method = "handleChatInput(Ljava/lang/String;Z)V", cancellable = true)
 	public void onSendMessage(String message, boolean addToHistory, CallbackInfo ci) {
-		if (message.startsWith(CommandManager.PREFIX.getValue())) {
-			Aoba.getInstance().commandManager.command(message.split(" "));
+		if (Aoba.getInstance().commandManager != null && Aoba.getInstance().commandManager.dispatch(message)) {
 			ci.cancel();
 		}
 	}

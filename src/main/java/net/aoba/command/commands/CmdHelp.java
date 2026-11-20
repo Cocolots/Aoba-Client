@@ -8,78 +8,91 @@
 
 package net.aoba.command.commands;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 import net.aoba.Aoba;
 import net.aoba.command.Command;
+import net.aoba.command.HelpPage;
+import net.aoba.command.InvalidSyntaxException;
 import net.aoba.managers.CommandManager;
 import net.aoba.module.Module;
+import net.aoba.settings.Setting;
 import net.minecraft.ChatFormatting;
-import org.apache.commons.lang3.StringUtils;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
 
 public class CmdHelp extends Command {
+	private static final int COMMANDS_PER_PAGE = 7;
 
-    int indexesPerPage = 5;
+	public CmdHelp() {
+		super("help", "Shows commands and module settings.", "[page, module]");
+	}
 
-    public CmdHelp() {
-        super("help", "Shows the avaiable commands.", "[page, module]");
-    }
+	@Override
+	public void runCommand(String[] parameters) throws InvalidSyntaxException {
+		if (parameters.length == 0) {
+			showCommands(1);
+			return;
+		}
+		if (parameters.length > 1) {
+			throw new InvalidSyntaxException(this);
+		}
+		if (parameters[0].chars().allMatch(Character::isDigit)) {
+			try {
+				showCommands(Integer.parseInt(parameters[0]));
+			} catch (NumberFormatException e) {
+				throw new InvalidSyntaxException(this);
+			}
+			return;
+		}
+		showModule(parameters[0]);
+	}
 
-    @Override
-    public void runCommand(String[] parameters) {
-        if (parameters.length <= 0) {
-            ShowCommands(1);
-        } else if (StringUtils.isNumeric(parameters[0])) {
-            int page = Integer.parseInt(parameters[0]);
-            ShowCommands(page);
-        } else {
-            Module module = Aoba.getInstance().moduleManager.getModuleByName(parameters[0]);
-            if (module == null) {
-                CommandManager.sendChatMessage("Could not find Module '" + parameters[0] + "'.");
-            } else {
-                String title = "------------ " + ChatFormatting.LIGHT_PURPLE + module.getName() + " Help" + ChatFormatting.RESET + " ------------";
-                String unformatted_title = "------------ " + module.getName() + " Help ------------";
-                CommandManager.sendChatMessage(title);
-                CommandManager.sendChatMessage("Name: " + ChatFormatting.LIGHT_PURPLE + module.getName() + ChatFormatting.RESET);
-                CommandManager.sendChatMessage("Description: " + ChatFormatting.LIGHT_PURPLE + module.getDescription() + ChatFormatting.RESET);
-                CommandManager.sendChatMessage("Keybind: " + ChatFormatting.LIGHT_PURPLE + module.getBind().getValue().getKey().getName() + ChatFormatting.RESET);
-                CommandManager.sendChatMessage("-".repeat(unformatted_title.length() - 2)); // mc font characters are not the same width but eh..
-            }
-        }
+	private void showCommands(int requestedPage) {
+		List<String> names = new ArrayList<>(Aoba.getInstance().commandManager.getCommands().keySet());
+		names.sort(String.CASE_INSENSITIVE_ORDER);
+		HelpPage<String> page = HelpPage.of(names, requestedPage, COMMANDS_PER_PAGE);
+		String prefix = CommandManager.PREFIX.getValue();
 
-    }
+		CommandManager.sendChatMessage("------------ Help [Page " + page.page() + " of " + page.pageCount()
+				+ "] ------------");
+		CommandManager.sendChatMessage("Use " + ChatFormatting.LIGHT_PURPLE + prefix + " help [page|module]"
+				+ ChatFormatting.RESET + " for command pages or module details.");
+		for (String name : page.entries()) {
+			Command command = Aoba.getInstance().commandManager.getCommandBySyntax(name);
+			CommandManager.sendChatMessage(prefix + " " + name + " " + command.getSyntax() + " — "
+					+ command.getDescription());
+		}
+		if (names.isEmpty()) {
+			CommandManager.sendChatMessage("No commands registered.");
+		}
+	}
 
-    private void ShowCommands(int page) {
-        String title = "------------ Help [Page " + page + " of 5] ------------";  // TODO: remove hardcoded page length
-        CommandManager.sendChatMessage(title);
-        CommandManager.sendChatMessage("Use " + ChatFormatting.LIGHT_PURPLE + ".aoba help [n]" + ChatFormatting.RESET + " to get page n of help.");
+	private void showModule(String name) {
+		Module module = Aoba.getInstance().moduleManager.getModuleByName(name);
+		if (module == null) {
+			CommandManager.sendChatMessage("Could not find module '" + name + "'.");
+			return;
+		}
 
-        // Fetch the commands and dislays their syntax on the screen.
-        Map<String, Command> commands = Aoba.getInstance().commandManager.getCommands();
-        Set<String> keySet = commands.keySet();
-        ArrayList<String> listOfCommands = new ArrayList<String>(keySet);
+		CommandManager.sendChatMessage("------------ " + ChatFormatting.LIGHT_PURPLE + module.getName()
+				+ ChatFormatting.RESET + " ------------");
+		CommandManager.sendChatMessage("Description: " + module.getDescription());
+		CommandManager.sendChatMessage("Category: " + module.getCategory().getName());
+		CommandManager.sendChatMessage("State: " + module.getStatus());
+		CommandManager.sendChatMessage("Keybind: " + module.getBind().getValue());
+		for (Setting<?> setting : module.getSettings()) {
+			if (setting == module.state || setting == module.getBind()) {
+				continue;
+			}
+			CommandManager.sendChatMessage(setting.displayName + ": " + setting.getValue()
+					+ (setting.description == null || setting.description.isBlank() ? "" : " — " + setting.description));
+		}
+	}
 
-        for (int i = (page - 1) * indexesPerPage; i <= (page * indexesPerPage); i++) {
-            if (i >= 0 && i < Aoba.getInstance().commandManager.getNumOfCommands()) {
-                CommandManager.sendChatMessage(" .aoba " + listOfCommands.get(i));
-            }
-        }
-        CommandManager.sendChatMessage("-".repeat(title.length() - 2)); // mc font characters are not the same width but eh..
-    }
-
-    @Override
-    public String[] getAutocorrect(String previousParameter) {
-        CommandManager cm = Aoba.getInstance().commandManager;
-        int numCmds = cm.getNumOfCommands();
-        String[] commands = new String[numCmds];
-
-        Set<String> cmds = Aoba.getInstance().commandManager.getCommands().keySet();
-        int i = 0;
-        for (String x : cmds)
-            commands[i++] = x;
-
-        return commands;
-    }
-
+	@Override
+	public String[] getAutocorrect(String previousParameter) {
+		return Aoba.getInstance().moduleManager.modules.stream().map(Module::getName)
+				.sorted(Comparator.comparing(String::toLowerCase)).toArray(String[]::new);
+	}
 }
