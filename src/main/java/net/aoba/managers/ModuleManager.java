@@ -48,6 +48,7 @@ import net.aoba.module.modules.combat.ShieldBreaker;
 import net.aoba.module.modules.combat.TriggerBot;
 import net.aoba.module.modules.misc.*;
 import net.aoba.module.modules.movement.ClickTP;
+import net.aoba.module.modules.movement.ElytraFly;
 import net.aoba.module.modules.movement.EntityControl;
 import net.aoba.module.modules.movement.FastLadder;
 import net.aoba.module.modules.movement.Fly;
@@ -125,6 +126,7 @@ public class ModuleManager implements KeyDownListener, KeyUpListener {
 	public Criticals criticals = new Criticals();
 	public ClickTP clickTP = new ClickTP();
 	public DiscordRPCModule discordRPC = new DiscordRPCModule();
+	public ElytraFly elytraFly = new ElytraFly(); 
 	public ElytraTarget elytraTarget = new ElytraTarget();
 	public EntityControl entityControl = new EntityControl();
 	public EntityESP entityesp = new EntityESP();
