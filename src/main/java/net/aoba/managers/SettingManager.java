@@ -109,7 +109,11 @@ public class SettingManager {
 	static File getConfigFile(File settingsFolder, String configName) throws IOException {
 		try {
 			File canonicalFolder = settingsFolder.getCanonicalFile();
-			File configFile = new File(canonicalFolder, configName + ".xml").getCanonicalFile();
+			File requestedFile = new File(configName + ".xml");
+			if (requestedFile.isAbsolute()) {
+				throw new IOException("Config file must be inside the settings directory.");
+			}
+			File configFile = new File(canonicalFolder, requestedFile.getPath()).getCanonicalFile();
 			if (!configFile.toPath().startsWith(canonicalFolder.toPath())) {
 				throw new IOException("Config file must be inside the settings directory.");
 			}
