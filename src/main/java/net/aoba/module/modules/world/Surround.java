@@ -22,6 +22,7 @@ import net.aoba.event.events.TickEvent.Post;
 import net.aoba.event.events.TickEvent.Pre;
 import net.aoba.event.listeners.TickListener;
 import net.aoba.managers.rotation.RotationMode;
+import net.aoba.managers.rotation.goals.Goal;
 import net.aoba.managers.rotation.goals.Vec3dGoal;
 import net.aoba.module.AntiCheat;
 import net.aoba.module.Category;
@@ -33,15 +34,18 @@ import net.aoba.settings.types.FloatSetting;
 import net.aoba.settings.types.IntegerSetting;
 import net.aoba.utils.FindItemResult;
 import net.aoba.utils.player.InteractionUtils;
-import net.aoba.utils.player.MiningController;
-import net.aoba.utils.player.RotationGoalOwner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class Surround extends Module implements TickListener {
@@ -92,9 +96,12 @@ public class Surround extends Module implements TickListener {
 	private static final Set<Block> BREAKABLE_BLOCKS = Set.of(Blocks.TALL_GRASS, Blocks.FERN, Blocks.LARGE_FERN,
 			Blocks.DEAD_BUSH, Blocks.VINE, Blocks.WHEAT, Blocks.CARROTS, Blocks.POTATOES, Blocks.BEETROOTS);
 
-	private final MiningController miner = MiningController.create(MC);
-	private final RotationGoalOwner rotationOwner = new RotationGoalOwner();
+	private final RotationOwner rotationOwner = new RotationOwner();
 	private final Map<BlockPos, Long> pendingPlacements = new HashMap<>();
+	private BlockPos miningTarget;
+	private Direction miningFace;
+	private boolean mining;
+	private long lastMiningActionTime = Long.MIN_VALUE;
 	private int placementCooldownTicks;
 
 	public Surround() {
@@ -122,7 +129,7 @@ public class Surround extends Module implements TickListener {
 		Aoba.getInstance().eventManager.AddListener(TickListener.class, this);
 		pendingPlacements.clear();
 		placementCooldownTicks = 0;
-		miner.resetTiming();
+		lastMiningActionTime = Long.MIN_VALUE;
 
 		if (alignCharacter.getValue() && MC.player != null && MC.player.connection != null) {
 			BlockPos blockPos = MC.player.blockPosition();
@@ -137,10 +144,10 @@ public class Surround extends Module implements TickListener {
 	@Override
 	public void onDisable() {
 		Aoba.getInstance().eventManager.RemoveListener(TickListener.class, this);
-		miner.reset();
+		resetMining();
 		rotationOwner.clear();
 		pendingPlacements.clear();
-		swapBack();
+		swapBackSafely();
 	}
 
 	@Override
@@ -189,7 +196,7 @@ public class Surround extends Module implements TickListener {
 	}
 
 	private BlockPos findMiningTarget(List<BlockPos> plan) {
-		BlockPos active = miner.getTarget();
+		BlockPos active = miningTarget;
 		if (active != null && isBreakable(active)) {
 			return active;
 		}
@@ -224,7 +231,7 @@ public class Surround extends Module implements TickListener {
 		}
 		float destroySpeed = MC.level.getBlockState(pos).getDestroySpeed(MC.level, pos);
 		boolean immediate = MC.player.isCreative() || destroySpeed == 0f;
-		miner.mine(pos, getFace(pos), immediate, miningDelay.getValue().longValue(), System.currentTimeMillis());
+		mine(pos, getFace(pos), immediate, miningDelay.getValue().longValue(), System.currentTimeMillis());
 	}
 
 	private void placeBlocks(List<BlockPos> plan, BlockPos firstTarget) {
@@ -257,7 +264,7 @@ public class Surround extends Module implements TickListener {
 				if (!state.getFluidState().isEmpty() || !state.canBeReplaced() || pendingPlacements.containsKey(pos)) {
 					continue;
 				}
-				if (!InteractionUtils.placeBlock(pos, hand)) {
+				if (!placeBlock(pos, hand)) {
 					break;
 				}
 				pendingPlacements.put(pos, System.currentTimeMillis());
@@ -289,14 +296,119 @@ public class Surround extends Module implements TickListener {
 	}
 
 	private void finishMining() {
-		if (miner.getTarget() == null) {
+		if (miningTarget == null) {
 			return;
 		}
-		if (MC.level.getBlockState(miner.getTarget()).isAir()) {
-			miner.clear();
+		if (MC.level.getBlockState(miningTarget).isAir()) {
+			clearMining();
 		} else {
-			miner.reset();
+			resetMining();
 		}
+	}
+
+	private boolean placeBlock(BlockPos blockPos, InteractionHand hand) {
+		Inventory inventory = MC.player.getInventory();
+		ItemStack itemInHand = hand == InteractionHand.MAIN_HAND ? inventory.getSelectedItem()
+				: inventory.getItem(InteractionUtils.OFFHAND);
+		if (!(itemInHand.getItem() instanceof BlockItem)) {
+			return false;
+		}
+
+		BlockHitResult placementHit = getPlacementHit(blockPos);
+		return placementHit != null && InteractionUtils.interactBlock(placementHit, hand);
+	}
+
+	private BlockHitResult getPlacementHit(BlockPos blockPos) {
+		Direction side = getPlaceSide(blockPos);
+		if (side == null) {
+			return null;
+		}
+
+		BlockPos neighbour = blockPos.relative(side);
+		Vec3 placePos = Vec3.atCenterOf(blockPos).add(side.getStepX() * 0.5, side.getStepY() * 0.5,
+				side.getStepZ() * 0.5);
+		return new BlockHitResult(placePos, side.getOpposite(), neighbour, false);
+	}
+
+	private Direction getPlaceSide(BlockPos blockPos) {
+		Vec3 lookVec = Vec3.atCenterOf(blockPos).subtract(MC.player.getEyePosition());
+		double bestRelevancy = -Double.MAX_VALUE;
+		Direction bestSide = null;
+
+		for (Direction side : Direction.values()) {
+			BlockPos neighborPos = blockPos.relative(side);
+			BlockState blockState = MC.level.getBlockState(neighborPos);
+			if (blockState.isAir() || !blockState.getFluidState().isEmpty() || blockState.canBeReplaced()
+					|| blockState.getCollisionShape(MC.level, neighborPos).isEmpty()) {
+				continue;
+			}
+
+			Direction.AxisDirection direction = side.getAxisDirection();
+			double relevancy = side.getAxis().choose(lookVec.x(), lookVec.y(), lookVec.z()) * direction.getStep();
+			if (relevancy > bestRelevancy) {
+				bestRelevancy = relevancy;
+				bestSide = side;
+			}
+		}
+		return bestSide;
+	}
+
+	private void mine(BlockPos nextTarget, Direction nextFace, boolean immediate, long delayMs, long nowMs) {
+		if (nextTarget == null) {
+			resetMining();
+			return;
+		}
+
+		if (!nextTarget.equals(miningTarget)) {
+			resetMining();
+			miningTarget = nextTarget;
+			miningFace = nextFace;
+		} else if (nextFace != null) {
+			miningFace = nextFace;
+		}
+
+		if (lastMiningActionTime != Long.MIN_VALUE && nowMs - lastMiningActionTime < delayMs) {
+			return;
+		}
+
+		if (!mining) {
+			if (MC.gameMode != null) {
+				MC.gameMode.startDestroyBlock(miningTarget, miningFace);
+			}
+			mining = true;
+			swingMiningHand();
+		} else if (!immediate && MC.gameMode != null && MC.gameMode.continueDestroyBlock(miningTarget, miningFace)) {
+			swingMiningHand();
+		}
+
+		if (immediate) {
+			if (MC.gameMode != null) {
+				MC.gameMode.stopDestroyBlock();
+			}
+			clearMining();
+		}
+
+		lastMiningActionTime = nowMs;
+	}
+
+	private void swingMiningHand() {
+		if (MC.player != null) {
+			MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
+			MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
+		}
+	}
+
+	private void resetMining() {
+		if (mining && MC.gameMode != null) {
+			MC.gameMode.stopDestroyBlock();
+		}
+		clearMining();
+	}
+
+	private void clearMining() {
+		miningTarget = null;
+		miningFace = null;
+		mining = false;
 	}
 
 	private Direction getFace(BlockPos pos) {
@@ -322,9 +434,39 @@ public class Surround extends Module implements TickListener {
 	}
 
 	private void resetWork() {
-		miner.reset();
+		resetMining();
 		rotationOwner.clear();
 		pendingPlacements.clear();
-		swapBack();
+		swapBackSafely();
+	}
+
+	private void swapBackSafely() {
+		if (MC.player != null && MC.gameMode != null) {
+			swapBack();
+		}
+	}
+
+	private static final class RotationOwner {
+		private Goal<?> ownedGoal;
+
+		boolean isActive() {
+			return ownedGoal != null && Aoba.getInstance().rotationManager.getGoal() == ownedGoal;
+		}
+
+		Goal<?> getOwnedGoal() {
+			return ownedGoal;
+		}
+
+		void set(Goal<?> goal) {
+			ownedGoal = goal;
+			Aoba.getInstance().rotationManager.setGoal(goal);
+		}
+
+		void clear() {
+			if (ownedGoal != null && Aoba.getInstance().rotationManager.getGoal() == ownedGoal) {
+				Aoba.getInstance().rotationManager.setGoal(null);
+			}
+			ownedGoal = null;
+		}
 	}
 }

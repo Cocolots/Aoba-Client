@@ -22,6 +22,7 @@ import net.aoba.event.events.TickEvent.Post;
 import net.aoba.event.events.TickEvent.Pre;
 import net.aoba.event.listeners.TickListener;
 import net.aoba.managers.rotation.RotationMode;
+import net.aoba.managers.rotation.goals.Goal;
 import net.aoba.managers.rotation.goals.Vec3dGoal;
 import net.aoba.module.Category;
 import net.aoba.module.Module;
@@ -32,14 +33,18 @@ import net.aoba.settings.types.FloatSetting;
 import net.aoba.settings.types.IntegerSetting;
 import net.aoba.settings.types.KeybindSetting;
 import net.aoba.utils.input.Keybind;
-import net.aoba.utils.player.InteractionUtils;
-import net.aoba.utils.player.RotationGoalOwner;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class Scaffold extends Module implements TickListener {
@@ -136,7 +141,7 @@ public class Scaffold extends Module implements TickListener {
 			.displayName("Disable Descend Sneak").description("Prevents Safe Walk sneaking while the descend key is held")
 			.defaultValue(true).build();
 
-	private final RotationGoalOwner rotationOwner = new RotationGoalOwner();
+	private final RotationOwner rotationOwner = new RotationOwner();
 	private final Map<BlockPos, Long> pendingPlacements = new HashMap<>();
 	private int placementY;
 	private int placementCooldown;
@@ -240,7 +245,7 @@ public class Scaffold extends Module implements TickListener {
 			return;
 		}
 
-		BlockHitResult firstHit = InteractionUtils.getPlacementHit(firstTarget);
+		BlockHitResult firstHit = getPlacementHit(firstTarget);
 		if (firstHit == null || !updateRotation(firstHit)) {
 			return;
 		}
@@ -264,7 +269,7 @@ public class Scaffold extends Module implements TickListener {
 	private boolean canAttempt(BlockPos pos) {
 		BlockState state = MC.level.getBlockState(pos);
 		return state.canBeReplaced() && state.getFluidState().isEmpty() && !pendingPlacements.containsKey(pos)
-				&& InteractionUtils.getPlacementHit(pos) != null;
+				&& getPlacementHit(pos) != null;
 	}
 
 	private void placeBatch(List<BlockPos> candidates, ScaffoldBlockSelector.Selection selection) {
@@ -283,11 +288,11 @@ public class Scaffold extends Module implements TickListener {
 					continue;
 				}
 
-				BlockHitResult hit = InteractionUtils.getPlacementHit(pos);
-				if (hit == null || requireSight.getValue() && !InteractionUtils.isPlacementVisible(hit)) {
+				BlockHitResult hit = getPlacementHit(pos);
+				if (hit == null || requireSight.getValue() && !isPlacementVisible(hit)) {
 					continue;
 				}
-				if (!InteractionUtils.interactBlock(hit, selection.hand(), swingHand.getValue())) {
+				if (!interactBlock(hit, selection.hand(), swingHand.getValue())) {
 					continue;
 				}
 
@@ -364,14 +369,108 @@ public class Scaffold extends Module implements TickListener {
 		}
 	}
 
+	private BlockHitResult getPlacementHit(BlockPos blockPos) {
+		Direction side = getPlaceSide(blockPos);
+		if (side == null) {
+			return null;
+		}
+
+		BlockPos neighbour = blockPos.relative(side);
+		Vec3 placePos = Vec3.atCenterOf(blockPos).add(side.getStepX() * 0.5, side.getStepY() * 0.5,
+				side.getStepZ() * 0.5);
+		return new BlockHitResult(placePos, side.getOpposite(), neighbour, false);
+	}
+
+	private Direction getPlaceSide(BlockPos blockPos) {
+		Vec3 lookVec = Vec3.atCenterOf(blockPos).subtract(MC.player.getEyePosition());
+		double bestRelevancy = -Double.MAX_VALUE;
+		Direction bestSide = null;
+
+		for (Direction side : Direction.values()) {
+			BlockPos neighborPos = blockPos.relative(side);
+			BlockState blockState = MC.level.getBlockState(neighborPos);
+			if (blockState.isAir() || !blockState.getFluidState().isEmpty() || blockState.canBeReplaced()
+					|| blockState.getCollisionShape(MC.level, neighborPos).isEmpty()) {
+				continue;
+			}
+
+			Direction.AxisDirection direction = side.getAxisDirection();
+			double relevancy = side.getAxis().choose(lookVec.x(), lookVec.y(), lookVec.z()) * direction.getStep();
+			if (relevancy > bestRelevancy) {
+				bestRelevancy = relevancy;
+				bestSide = side;
+			}
+		}
+		return bestSide;
+	}
+
+	private boolean isPlacementVisible(BlockHitResult placementHit) {
+		Vec3 eye = MC.player.getEyePosition();
+		BlockHitResult ray = MC.level.clip(new ClipContext(eye, placementHit.getLocation(), ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE, MC.player));
+		return ray.getType() == HitResult.Type.BLOCK && ray.getBlockPos().equals(placementHit.getBlockPos())
+				&& ray.getDirection() == placementHit.getDirection();
+	}
+
+	private boolean interactBlock(BlockHitResult blockHitResult, InteractionHand hand, boolean swing) {
+		ItemStack heldItem = MC.player.getItemInHand(hand);
+		SwingAnimation swingAnimation = heldItem.getInteractAnimation();
+		int oldCount = heldItem.getCount();
+		InteractionResult result = MC.gameMode.useItemOn(MC.player, hand, blockHitResult);
+		if (!result.consumesAction()) {
+			return false;
+		}
+
+		if (result instanceof InteractionResult.Success success
+				&& success.swingSource() == InteractionResult.SwingSource.PREDICTED) {
+			if (swing) {
+				MC.player.swing(hand, swingAnimation, false);
+			}
+			if (!heldItem.isEmpty() && (heldItem.getCount() != oldCount || MC.player.hasInfiniteMaterials())) {
+				MC.player.itemUsed(hand);
+			}
+		}
+		return true;
+	}
+
 	private void resetWork() {
 		rotationOwner.clear();
 		pendingPlacements.clear();
 		placementCooldown = 0;
-		swapBack();
+		swapBackSafely();
 		if (safeWalkApplied) {
 			MC.options.keyShift.setDown(false);
 			safeWalkApplied = false;
+		}
+	}
+
+	private void swapBackSafely() {
+		if (MC.player != null && MC.gameMode != null) {
+			swapBack();
+		}
+	}
+
+	private static final class RotationOwner {
+		private Goal<?> ownedGoal;
+
+		boolean isActive() {
+			return ownedGoal != null && Aoba.getInstance().rotationManager.getGoal() == ownedGoal;
+		}
+
+		Goal<?> getOwnedGoal() {
+			return ownedGoal;
+		}
+
+		void set(Goal<?> goal) {
+			ownedGoal = goal;
+			Aoba.getInstance().rotationManager.setGoal(goal);
+		}
+
+		void clear() {
+			if (ownedGoal != null && Aoba.getInstance().rotationManager.getGoal() == ownedGoal) {
+				Aoba.getInstance().rotationManager.setGoal(null);
+			}
+			ownedGoal = null;
 		}
 	}
 }
