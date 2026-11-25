@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties version="1.0">
+  <comment>Aoba UI theme</comment>
+  <entry key="theme.id">aoba_purple</entry>
+  <entry key="theme.name">Aoba Purple</entry>
+  <entry key="hud_rounding_radius">12</entry>
+  <entry key="ui_line_thickness">0.5</entry>
+  <entry key="ui_foreground_color">solid,1,1,1,1</entry>
+  <entry key="ui_header_foreground_color">solid,0.823529412,0.31372549,1,1</entry>
+  <entry key="ui_accent_foreground_color">solid,0.498039216,0.498039216,0.498039216,1</entry>
+  <entry key="ui_window_border_color">solid,0,0,0,1</entry>
+  <entry key="ui_panel_border_color">solid,0.392156863,0.392156863,0.392156863,0.392156863</entry>
+  <entry key="ui_component_background_color">solid,0.0784313725,0.0784313725,0.0784313725,0.37254902</entry>
+  <entry key="ui_component_hover_background_color">solid,0.196078431,0.196078431,0.196078431,0.588235294</entry>
+  <entry key="ui_component_border_color">solid,0.450980392,0.450980392,0.450980392,0.784313725</entry>
+  <entry key="ui_window_background_color">blur,0,0,0,0.215686275,0.215686275,0.215686275,1,60,5</entry>
+  <entry key="ui_panel_background_color">solid,0.352941176,0.352941176,0.352941176,0.235294118</entry>
+  <entry key="ui_button_background_color">gradient,0.705882353,0.196078431,0.862745098,1,0.392156863,0.0784313725,0.62745098,1,90</entry>
+  <entry key="ui_button_hover_background_color">gradient,0.823529412,0.31372549,1,1,0.509803922,0.156862745,0.745098039,1,90</entry>
+  <entry key="ui_button_pressed_background_color">gradient,0.588235294,0.0784313725,0.764705882,1,0.274509804,0,0.509803922,1,90</entry>
+  <entry key="ui_button_border_color">gradient,0.862745098,0.392156863,1,1,0.549019608,0.196078431,0.784313725,1,90</entry>
+</properties>

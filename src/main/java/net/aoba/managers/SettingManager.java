@@ -21,7 +21,6 @@ import com.mojang.logging.LogUtils;
 
 import net.aoba.gui.colors.Color;
 import net.aoba.gui.types.Rectangle;
-import net.aoba.rendering.shaders.Shader;
 import net.aoba.settings.Setting;
 import net.aoba.settings.types.*;
 import net.aoba.utils.input.Keybind;
@@ -176,15 +175,8 @@ public class SettingManager {
 					properties.setProperty(setting.ID, c.getColorAsHex());
 				}
 				case SHADER -> {
-					ShaderSetting sSetting = (ShaderSetting) setting;
-					StringBuilder s = new StringBuilder();
-					s.append(sSetting.getShaderId());
-					Shader shader = sSetting.getValue();
-					if (shader != null && shader.uniformValues().length > 0) {
-						for (float v : shader.uniformValues())
-							s.append(",").append(v);
-					}
-					properties.setProperty(setting.ID, s.toString());
+					ShaderSetting shaderSetting = (ShaderSetting) setting;
+					properties.setProperty(setting.ID, shaderSetting.getSerializedValue());
 				}
 				case BLOCKS -> {
 					@SuppressWarnings("unchecked")
@@ -356,20 +348,8 @@ public class SettingManager {
 						setting.setValue(c);
 					}
 					case SHADER -> {
-						String[] splits = value.split(",");
-						ShaderSetting sSetting = (ShaderSetting) setting;
-						if (splits.length >= 1) {
-							sSetting.setShaderId(splits[0]);
-							Shader shader = sSetting.getValue();
-							if (shader != null && splits.length > 1) {
-								float[] vals = shader.uniformValues();
-								for (int idx = 0; idx < Math.min(splits.length - 1, vals.length); idx++) {
-									try {
-										vals[idx] = Float.parseFloat(splits[idx + 1]);
-									} catch (NumberFormatException ignored) {}
-								}
-							}
-						}
+						ShaderSetting shaderSetting = (ShaderSetting) setting;
+						shaderSetting.setSerializedValue(value);
 					}
 					case BLOCKS -> {
 						String[] ids = value.split(",");

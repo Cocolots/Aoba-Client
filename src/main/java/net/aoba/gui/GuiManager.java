@@ -10,6 +10,7 @@ package net.aoba.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,6 +67,7 @@ import net.aoba.gui.navigation.windows.FriendsWindow;
 import net.aoba.gui.navigation.windows.PathfindingWindow;
 import net.aoba.gui.navigation.windows.SearchWindow;
 import net.aoba.gui.navigation.windows.UIOptionsWindow;
+import net.aoba.gui.themes.GuiThemes;
 import net.aoba.gui.types.GridDefinition;
 import net.aoba.gui.types.Rectangle;
 import net.aoba.gui.types.Size;
@@ -80,6 +82,7 @@ import net.aoba.module.Category;
 import net.aoba.module.Module;
 import net.aoba.settings.types.BooleanSetting;
 import net.aoba.settings.types.ShaderSetting;
+import net.aoba.settings.types.StringSetting;
 import net.aoba.settings.types.FloatSetting;
 import net.aoba.settings.types.FontSetting;
 import net.aoba.settings.types.KeybindSetting;
@@ -123,6 +126,10 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 
 	public static BooleanSetting enableTooltips = BooleanSetting.builder().id("enable_tooltips")
 			.displayName("Enable Tooltips").defaultValue(true).build();
+
+	public static StringSetting themePreset = StringSetting.builder().id("ui_theme_preset")
+			.displayName("UI Theme Preset").description("The most recently applied UI theme preset.")
+			.defaultValue(GuiThemes.DEFAULT_THEME_ID).build();
 
 	public static ShaderSetting foregroundColor = ShaderSetting.builder().id("ui_foreground_color")
 			.displayName("UI Foreground Color").description("Color of the foreground.")
@@ -208,14 +215,19 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	public InputHud inputHud;
 
 	public GuiManager() {
+		GuiThemes.initialize(MC.gameDirectory.toPath());
 		clickGuiTabControl = new TabComponent();
 
+		SettingManager.registerGlobalSetting(enableCustomTitle);
+		SettingManager.registerGlobalSetting(enableTooltips);
+		SettingManager.registerGlobalSetting(themePreset);
 		SettingManager.registerGlobalSetting(windowBorderColor);
 		SettingManager.registerGlobalSetting(windowBackgroundColor);
 		SettingManager.registerGlobalSetting(panelBorderColor);
 		SettingManager.registerGlobalSetting(panelBackgroundColor);
 		SettingManager.registerGlobalSetting(componentBackgroundColor);
 		SettingManager.registerGlobalSetting(componentHoveredBackgroundColor);
+		SettingManager.registerGlobalSetting(componentBorderColor);
 		SettingManager.registerGlobalSetting(foregroundColor);
 		SettingManager.registerGlobalSetting(foregroundHeaderColor);
 		SettingManager.registerGlobalSetting(foregroundAccentColor);
@@ -234,6 +246,25 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 		Aoba.getInstance().eventManager.AddListener(MouseClickListener.class, this);
 		Aoba.getInstance().eventManager.AddListener(MouseMoveListener.class, this);
 		Aoba.getInstance().eventManager.AddListener(MouseScrollListener.class, this);
+	}
+
+	public static Map<String, ShaderSetting> getThemeSettings() {
+		LinkedHashMap<String, ShaderSetting> settings = new LinkedHashMap<>();
+		settings.put(GuiThemes.FOREGROUND, foregroundColor);
+		settings.put(GuiThemes.FOREGROUND_HEADER, foregroundHeaderColor);
+		settings.put(GuiThemes.FOREGROUND_ACCENT, foregroundAccentColor);
+		settings.put(GuiThemes.WINDOW_BORDER, windowBorderColor);
+		settings.put(GuiThemes.PANEL_BORDER, panelBorderColor);
+		settings.put(GuiThemes.COMPONENT_BACKGROUND, componentBackgroundColor);
+		settings.put(GuiThemes.COMPONENT_HOVER_BACKGROUND, componentHoveredBackgroundColor);
+		settings.put(GuiThemes.COMPONENT_BORDER, componentBorderColor);
+		settings.put(GuiThemes.WINDOW_BACKGROUND, windowBackgroundColor);
+		settings.put(GuiThemes.PANEL_BACKGROUND, panelBackgroundColor);
+		settings.put(GuiThemes.BUTTON_BACKGROUND, buttonBackgroundColor);
+		settings.put(GuiThemes.BUTTON_HOVER_BACKGROUND, buttonHoverBackgroundColor);
+		settings.put(GuiThemes.BUTTON_PRESSED_BACKGROUND, buttonPressedBackgroundColor);
+		settings.put(GuiThemes.BUTTON_BORDER, buttonBorderColor);
+		return settings;
 	}
 
 	public void Initialize() {

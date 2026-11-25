@@ -8,49 +8,80 @@
 
 package net.aoba.gui.navigation.windows;
 
+import java.io.IOException;
 import java.util.List;
+
 import net.aoba.Aoba;
 import net.aoba.gui.GuiManager;
 import net.aoba.gui.UIElement;
+import net.aoba.gui.components.ButtonComponent;
 import net.aoba.gui.components.CheckboxComponent;
-import net.aoba.gui.components.ExpanderComponent;
-import net.aoba.gui.components.ShaderComponent;
-import net.aoba.gui.components.KeybindComponent;
 import net.aoba.gui.components.ComboBoxComponent;
+import net.aoba.gui.components.ExpanderComponent;
+import net.aoba.gui.components.KeybindComponent;
 import net.aoba.gui.components.ScrollComponent;
+import net.aoba.gui.components.ShaderComponent;
 import net.aoba.gui.components.SliderComponent;
 import net.aoba.gui.components.StackPanelComponent;
 import net.aoba.gui.components.StringComponent;
+import net.aoba.gui.components.TextBoxComponent;
 import net.aoba.gui.font.FontManager;
 import net.aoba.gui.navigation.Window;
+import net.aoba.gui.themes.GuiThemes;
+import net.aoba.gui.themes.ThemePreset;
 import net.aoba.gui.types.BindingMode;
 import net.aoba.gui.types.SizeToContent;
+import net.aoba.settings.types.ShaderSetting;
 
 public class UIOptionsWindow extends Window {
 	public UIOptionsWindow() {
 		super("UI Settings", 600, 200);
 		sizeToContent = SizeToContent.Both;
-		setProperty(UIElement.MinWidthProperty, 400.0f);
+		setProperty(UIElement.MinWidthProperty, 420.0f);
 
 		StackPanelComponent stackPanel = new StackPanelComponent();
 		stackPanel.setSpacing(8f);
 
-		// Keybinds
-		StringComponent keybindsHeader = new StringComponent("Keybinds");
-		keybindsHeader.setProperty(UIElement.FontWeightProperty, FontManager.WEIGHT_BOLD);
-		keybindsHeader.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundHeaderColor);
-		stackPanel.addChild(keybindsHeader);
-		
-		KeybindComponent clickGuiButtonComponent = new KeybindComponent();
-		clickGuiButtonComponent.bindProperty(KeybindComponent.SelectedKeyProperty, Aoba.getInstance().guiManager.clickGuiButton, BindingMode.TwoWay);
-		clickGuiButtonComponent.setProperty(KeybindComponent.HeaderProperty, Aoba.getInstance().guiManager.clickGuiButton.displayName);
-		stackPanel.addChild(clickGuiButtonComponent);
+		// Theme presets
+		stackPanel.addChild(createHeader("Theme Presets"));
+		ComboBoxComponent themeCombo = new ComboBoxComponent();
+		themeCombo.setProperty(ComboBoxComponent.ItemsSourceProperty, GuiThemes.themes());
+		ThemePreset selectedTheme = GuiThemes.findById(GuiManager.themePreset.getValue())
+				.orElse(GuiThemes.defaultTheme());
+		themeCombo.setProperty(ComboBoxComponent.SelectedItemProperty, selectedTheme);
+		themeCombo.setOnItemChanged(item -> {
+			if (item instanceof ThemePreset theme) {
+				GuiThemes.apply(theme);
+			}
+		});
+		stackPanel.addChild(themeCombo);
+
+		StringComponent themeNote = new StringComponent("Fonts and keybinds are preserved.");
+		themeNote.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundAccentColor);
+		stackPanel.addChild(themeNote);
+
+		TextBoxComponent themeNameInput = new TextBoxComponent();
+		themeNameInput.setProperty(TextBoxComponent.PlaceholderText, "New theme name...");
+		StringComponent themeStatus = new StringComponent("Themes are stored in .minecraft/aoba/themes.");
+		themeStatus.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundAccentColor);
+		ButtonComponent saveThemeButton = new ButtonComponent(() -> {
+			try {
+				ThemePreset savedTheme = GuiThemes.saveCurrent(themeNameInput.getProperty(TextBoxComponent.TextProperty));
+				themeCombo.setProperty(ComboBoxComponent.ItemsSourceProperty, GuiThemes.themes());
+				themeCombo.setProperty(ComboBoxComponent.SelectedItemProperty, savedTheme);
+				themeNameInput.setProperty(TextBoxComponent.TextProperty, "");
+				themeStatus.setProperty(StringComponent.TextProperty, "Saved " + savedTheme.displayName() + ".");
+			} catch (IOException | IllegalArgumentException e) {
+				themeStatus.setProperty(StringComponent.TextProperty, "Could not save theme: " + e.getMessage());
+			}
+		});
+		saveThemeButton.setContent(new StringComponent("Save Current Theme"));
+		stackPanel.addChild(themeNameInput);
+		stackPanel.addChild(saveThemeButton);
+		stackPanel.addChild(themeStatus);
 
 		// Font
-		StringComponent fontHeader = new StringComponent("HUD Font");
-		fontHeader.setProperty(UIElement.FontWeightProperty, FontManager.WEIGHT_BOLD);
-		fontHeader.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundHeaderColor);
-		stackPanel.addChild(fontHeader);
+		stackPanel.addChild(createHeader("HUD Font"));
 		List<String> fontNames = Aoba.getInstance().fontManager.fonts.keySet().stream().toList();
 		ComboBoxComponent fontCombo = new ComboBoxComponent();
 		fontCombo.setProperty(ComboBoxComponent.ItemsSourceProperty, fontNames);
@@ -59,106 +90,41 @@ public class UIOptionsWindow extends Window {
 			label.setProperty(UIElement.FontProperty, Aoba.getInstance().fontManager.getFont((String) name));
 			return label;
 		});
-		fontCombo.setOnItemChanged(s -> {
-			if(s instanceof String name)
-				GuiManager.fontSetting.setFontName(name);
-		});
 		fontCombo.setProperty(ComboBoxComponent.SelectedItemProperty, GuiManager.fontSetting.getFontName());
+		fontCombo.setOnItemChanged(s -> {
+			if (s instanceof String name) {
+				GuiManager.fontSetting.setFontName(name);
+			}
+		});
 		stackPanel.addChild(fontCombo);
 
 		// Colors
-		StringComponent colorsHeader = new StringComponent("Colors");
-		colorsHeader.setProperty(UIElement.FontWeightProperty, FontManager.WEIGHT_BOLD);
-		colorsHeader.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundHeaderColor);
-		stackPanel.addChild(colorsHeader);
-
+		stackPanel.addChild(createHeader("Colors"));
 		StackPanelComponent colorStack = new StackPanelComponent();
 		colorStack.setSpacing(8f);
-
-		ShaderComponent foregroundShader = new ShaderComponent();
-		foregroundShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.foregroundColor, BindingMode.TwoWay);
-		ExpanderComponent foregroundExpander = new ExpanderComponent(GuiManager.foregroundColor.displayName);
-		foregroundExpander.setProperty(ExpanderComponent.ExpanderContentProperty, foregroundShader);
-		colorStack.addChild(foregroundExpander);
-
-		ShaderComponent foregroundHeaderShader = new ShaderComponent();
-		foregroundHeaderShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.foregroundHeaderColor, BindingMode.TwoWay);
-		ExpanderComponent foregroundHeaderExpander = new ExpanderComponent(GuiManager.foregroundHeaderColor.displayName);
-		foregroundHeaderExpander.setProperty(ExpanderComponent.ExpanderContentProperty, foregroundHeaderShader);
-		colorStack.addChild(foregroundHeaderExpander);
-
-		ShaderComponent foregroundAccentShader = new ShaderComponent();
-		foregroundAccentShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.foregroundAccentColor, BindingMode.TwoWay);
-		ExpanderComponent foregroundAccentExpander = new ExpanderComponent(GuiManager.foregroundAccentColor.displayName);
-		foregroundAccentExpander.setProperty(ExpanderComponent.ExpanderContentProperty, foregroundAccentShader);
-		colorStack.addChild(foregroundAccentExpander);
-
-		ShaderComponent windowBorderShader = new ShaderComponent();
-		windowBorderShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.windowBorderColor, BindingMode.TwoWay);
-		ExpanderComponent windowBorderExpander = new ExpanderComponent(GuiManager.windowBorderColor.displayName);
-		windowBorderExpander.setProperty(ExpanderComponent.ExpanderContentProperty, windowBorderShader);
-		colorStack.addChild(windowBorderExpander);
-
-		ShaderComponent panelBorderShader = new ShaderComponent();
-		panelBorderShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.panelBorderColor, BindingMode.TwoWay);
-		ExpanderComponent panelBorderExpander = new ExpanderComponent(GuiManager.panelBorderColor.displayName);
-		panelBorderExpander.setProperty(ExpanderComponent.ExpanderContentProperty, panelBorderShader);
-		colorStack.addChild(panelBorderExpander);
-
-		ShaderComponent componentBorderShader = new ShaderComponent();
-		componentBorderShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.componentBorderColor, BindingMode.TwoWay);
-		ExpanderComponent componentBorderExpander = new ExpanderComponent(GuiManager.componentBorderColor.displayName);
-		componentBorderExpander.setProperty(ExpanderComponent.ExpanderContentProperty, componentBorderShader);
-		colorStack.addChild(componentBorderExpander);
-
-		ShaderComponent windowBgShader = new ShaderComponent();
-		windowBgShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.windowBackgroundColor, BindingMode.TwoWay);
-		ExpanderComponent windowBgExpander = new ExpanderComponent(GuiManager.windowBackgroundColor.displayName);
-		windowBgExpander.setProperty(ExpanderComponent.ExpanderContentProperty, windowBgShader);
-		colorStack.addChild(windowBgExpander);
-
-		ShaderComponent panelBgShader = new ShaderComponent();
-		panelBgShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.panelBackgroundColor, BindingMode.TwoWay);
-		ExpanderComponent panelBgExpander = new ExpanderComponent(GuiManager.panelBackgroundColor.displayName);
-		panelBgExpander.setProperty(ExpanderComponent.ExpanderContentProperty, panelBgShader);
-		colorStack.addChild(panelBgExpander);
-
-		ShaderComponent componentBgShader = new ShaderComponent();
-		componentBgShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.componentBackgroundColor, BindingMode.TwoWay);
-		ExpanderComponent componentBgExpander = new ExpanderComponent(GuiManager.componentBackgroundColor.displayName);
-		componentBgExpander.setProperty(ExpanderComponent.ExpanderContentProperty, componentBgShader);
-		colorStack.addChild(componentBgExpander);
-
-		ShaderComponent buttonBgShader = new ShaderComponent();
-		buttonBgShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.buttonBackgroundColor, BindingMode.TwoWay);
-		ExpanderComponent buttonBgExpander = new ExpanderComponent(GuiManager.buttonBackgroundColor.displayName);
-		buttonBgExpander.setProperty(ExpanderComponent.ExpanderContentProperty, buttonBgShader);
-		colorStack.addChild(buttonBgExpander);
-
-		ShaderComponent buttonHoverBgShader = new ShaderComponent();
-		buttonHoverBgShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.buttonHoverBackgroundColor, BindingMode.TwoWay);
-		ExpanderComponent buttonHoverBgExpander = new ExpanderComponent(GuiManager.buttonHoverBackgroundColor.displayName);
-		buttonHoverBgExpander.setProperty(ExpanderComponent.ExpanderContentProperty, buttonHoverBgShader);
-		colorStack.addChild(buttonHoverBgExpander);
-
-		ShaderComponent buttonBorderShader = new ShaderComponent();
-		buttonBorderShader.bindProperty(ShaderComponent.ShaderProperty, GuiManager.buttonBorderColor, BindingMode.TwoWay);
-		ExpanderComponent buttonBorderExpander = new ExpanderComponent(GuiManager.buttonBorderColor.displayName);
-		buttonBorderExpander.setProperty(ExpanderComponent.ExpanderContentProperty, buttonBorderShader);
-		colorStack.addChild(buttonBorderExpander);
+		addShaderEditor(colorStack, GuiManager.foregroundColor);
+		addShaderEditor(colorStack, GuiManager.foregroundHeaderColor);
+		addShaderEditor(colorStack, GuiManager.foregroundAccentColor);
+		addShaderEditor(colorStack, GuiManager.windowBorderColor);
+		addShaderEditor(colorStack, GuiManager.panelBorderColor);
+		addShaderEditor(colorStack, GuiManager.componentBorderColor);
+		addShaderEditor(colorStack, GuiManager.windowBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.panelBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.componentBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.componentHoveredBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.buttonBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.buttonHoverBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.buttonPressedBackgroundColor);
+		addShaderEditor(colorStack, GuiManager.buttonBorderColor);
 
 		ScrollComponent colorScroll = new ScrollComponent();
 		colorScroll.setContent(colorStack);
 		colorScroll.setProperty(UIElement.ClipToBoundsProperty, true);
-		colorScroll.setProperty(UIElement.MaxHeightProperty, 300.0f);
+		colorScroll.setProperty(UIElement.MaxHeightProperty, 320.0f);
 		stackPanel.addChild(colorScroll);
 
 		// Styling
-		StringComponent stylingHeader = new StringComponent("Styling");
-		stylingHeader.setProperty(UIElement.FontWeightProperty, FontManager.WEIGHT_BOLD);
-		stylingHeader.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundHeaderColor);
-		stackPanel.addChild(stylingHeader);
-		
+		stackPanel.addChild(createHeader("Styling"));
 		SliderComponent roundingRadiusSlider = new SliderComponent();
 		roundingRadiusSlider.setProperty(SliderComponent.HeaderProperty, GuiManager.roundingRadius.displayName);
 		roundingRadiusSlider.setProperty(SliderComponent.MinimumProperty, GuiManager.roundingRadius.min_value);
@@ -166,7 +132,7 @@ public class UIOptionsWindow extends Window {
 		roundingRadiusSlider.bindProperty(SliderComponent.ValueProperty, GuiManager.roundingRadius, BindingMode.TwoWay);
 		roundingRadiusSlider.setProperty(SliderComponent.StepProperty, GuiManager.roundingRadius.step);
 		stackPanel.addChild(roundingRadiusSlider);
-		
+
 		SliderComponent lineThicknessSlider = new SliderComponent();
 		lineThicknessSlider.setProperty(SliderComponent.HeaderProperty, GuiManager.lineThickness.displayName);
 		lineThicknessSlider.setProperty(SliderComponent.MinimumProperty, GuiManager.lineThickness.min_value);
@@ -174,23 +140,44 @@ public class UIOptionsWindow extends Window {
 		lineThicknessSlider.bindProperty(SliderComponent.ValueProperty, GuiManager.lineThickness, BindingMode.TwoWay);
 		lineThicknessSlider.setProperty(SliderComponent.StepProperty, GuiManager.lineThickness.step);
 		stackPanel.addChild(lineThicknessSlider);
-		
-		// Responsiveness
-		StringComponent responsivenessHeader = new StringComponent("Responsiveness");
-		responsivenessHeader.setProperty(UIElement.FontWeightProperty, FontManager.WEIGHT_BOLD);
-		responsivenessHeader.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundHeaderColor);
-		stackPanel.addChild(responsivenessHeader);
-		
+
+		// Interface behavior
+		stackPanel.addChild(createHeader("Interface"));
 		CheckboxComponent customTitleScreenCheckbox = new CheckboxComponent();
 		customTitleScreenCheckbox.setProperty(CheckboxComponent.HeaderProperty, GuiManager.enableCustomTitle.displayName);
-		customTitleScreenCheckbox.bindProperty(CheckboxComponent.IsCheckedProperty, GuiManager.enableCustomTitle, BindingMode.TwoWay);
+		customTitleScreenCheckbox.bindProperty(CheckboxComponent.IsCheckedProperty, GuiManager.enableCustomTitle,
+				BindingMode.TwoWay);
 		stackPanel.addChild(customTitleScreenCheckbox);
-		
+
 		CheckboxComponent tooltipCheckbox = new CheckboxComponent();
 		tooltipCheckbox.setProperty(CheckboxComponent.HeaderProperty, GuiManager.enableTooltips.displayName);
 		tooltipCheckbox.bindProperty(CheckboxComponent.IsCheckedProperty, GuiManager.enableTooltips, BindingMode.TwoWay);
 		stackPanel.addChild(tooltipCheckbox);
 
+		// Keybinds
+		stackPanel.addChild(createHeader("Keybinds"));
+		KeybindComponent clickGuiButtonComponent = new KeybindComponent();
+		clickGuiButtonComponent.bindProperty(KeybindComponent.SelectedKeyProperty,
+				Aoba.getInstance().guiManager.clickGuiButton, BindingMode.TwoWay);
+		clickGuiButtonComponent.setProperty(KeybindComponent.HeaderProperty,
+				Aoba.getInstance().guiManager.clickGuiButton.displayName);
+		stackPanel.addChild(clickGuiButtonComponent);
+
 		setContent(stackPanel);
+	}
+
+	private static StringComponent createHeader(String text) {
+		StringComponent header = new StringComponent(text);
+		header.setProperty(UIElement.FontWeightProperty, FontManager.WEIGHT_BOLD);
+		header.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundHeaderColor);
+		return header;
+	}
+
+	private static void addShaderEditor(StackPanelComponent parent, ShaderSetting setting) {
+		ShaderComponent shader = new ShaderComponent();
+		shader.bindProperty(ShaderComponent.ShaderProperty, setting, BindingMode.TwoWay);
+		ExpanderComponent expander = new ExpanderComponent(setting.displayName);
+		expander.setProperty(ExpanderComponent.ExpanderContentProperty, shader);
+		parent.addChild(expander);
 	}
 }
