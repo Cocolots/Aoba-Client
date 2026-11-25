@@ -59,8 +59,11 @@ public class Glide extends Module implements TickListener {
 	@Override
 	public void onTick(Pre event) {
 		LocalPlayer player = MC.player;
-		if (player.getDeltaMovement().y < 0 && (!player.onGround() || !player.isInLava() || !player.isUnderWater()
-				|| !player.isSuppressingSlidingDownLadder())) {
+		if (player == null) {
+			return;
+		}
+		if (player.getDeltaMovement().y < 0 && !player.onGround() && !player.isInLava() && !player.isUnderWater()
+				&& !player.isSuppressingSlidingDownLadder()) {
 			player.setDeltaMovement(player.getDeltaMovement().x, Math.max(player.getDeltaMovement().y, -fallSpeed.getValue()),
 					player.getDeltaMovement().z);
 		}
