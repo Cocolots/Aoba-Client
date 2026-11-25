@@ -40,6 +40,9 @@ public class InteractionUtils {
 	 * @return BlockHitResult if a ray collision occured, null otherwise.
 	 */
 	public static BlockHitResult raycastBlock(BlockPos targetBlock) {
+		if (MC.player == null || MC.level == null)
+			return null;
+
 		RotationManager rotationManager = Aoba.getInstance().rotationManager;
 		Vec3 eye = MC.player.getEyePosition();
 		Vec3 lookVector = rotationManager.getViewVector();
@@ -64,7 +67,7 @@ public class InteractionUtils {
 	 */
 	public static BlockHitResult raycastBlock(BlockPos targetBlock, Direction face) {
 		BlockHitResult ray = raycastBlock(targetBlock);
-		if (ray.getDirection() != face)
+		if (ray == null || ray.getDirection() != face)
 			return null;
 		return ray;
 	}
@@ -74,6 +77,9 @@ public class InteractionUtils {
 	}
 
 	public static EntityHitResult raycastEntity(Predicate<Entity> filter, double reach) {
+		if (MC.player == null || MC.level == null)
+			return null;
+
 		RotationManager rotationManager = Aoba.getInstance().rotationManager;
 		Vec3 eye = MC.player.getEyePosition();
 		Vec3 lookVector = rotationManager.getViewVector();
@@ -97,6 +103,10 @@ public class InteractionUtils {
 	 * @return True if the block was placed, false otherwise.
 	 */
 	public static boolean placeBlock(BlockPos blockPos, InteractionHand hand) {
+		if (blockPos == null || hand == null || MC.player == null || MC.level == null || MC.gameMode == null) {
+			return false;
+		}
+
 		Inventory inventory = MC.player.getInventory();
 		ItemStack itemInHand;
 		if (hand == InteractionHand.MAIN_HAND)
@@ -104,18 +114,44 @@ public class InteractionUtils {
 		else
 			itemInHand = inventory.getItem(OFFHAND);
 
-		if (itemInHand.getItem() instanceof BlockItem) {
-			Direction side = getPlaceSide(blockPos);
-			if (side == null)
-				return false;
-
-			BlockPos neighbour = blockPos.relative(side);
-			Vec3 placePos = Vec3.atCenterOf(blockPos).add(side.getStepX() * 0.5, side.getStepY() * 0.5,
-					side.getStepZ() * 0.5);
-			BlockHitResult raytraceResult = new BlockHitResult(placePos, side.getOpposite(), neighbour, false);
-			return interactBlock(raytraceResult, hand);
-		} else
+		if (!(itemInHand.getItem() instanceof BlockItem)) {
 			return false;
+		}
+
+		BlockHitResult placementHit = getPlacementHit(blockPos);
+		return placementHit != null && interactBlock(placementHit, hand);
+	}
+
+	/**
+	 * Builds a supported hit result for a placement position without depending on
+	 * the player's current crosshair target.
+	 */
+	public static BlockHitResult getPlacementHit(BlockPos blockPos) {
+		if (blockPos == null || MC.player == null || MC.level == null) {
+			return null;
+		}
+
+		Direction side = getPlaceSide(blockPos);
+		if (side == null) {
+			return null;
+		}
+
+		BlockPos neighbour = blockPos.relative(side);
+		Vec3 placePos = Vec3.atCenterOf(blockPos).add(side.getStepX() * 0.5, side.getStepY() * 0.5,
+				side.getStepZ() * 0.5);
+		return new BlockHitResult(placePos, side.getOpposite(), neighbour, false);
+	}
+
+	public static boolean isPlacementVisible(BlockHitResult placementHit) {
+		if (placementHit == null || MC.player == null || MC.level == null) {
+			return false;
+		}
+
+		Vec3 eye = MC.player.getEyePosition();
+		BlockHitResult ray = MC.level.clip(new ClipContext(eye, placementHit.getLocation(), ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE, MC.player));
+		return ray.getType() == HitResult.Type.BLOCK && ray.getBlockPos().equals(placementHit.getBlockPos())
+				&& ray.getDirection() == placementHit.getDirection();
 	}
 
 	/**
@@ -126,6 +162,14 @@ public class InteractionUtils {
 	 * @return True if the block was interacted with.
 	 */
 	public static boolean interactBlock(BlockHitResult blockHitResult, InteractionHand hand) {
+		return interactBlock(blockHitResult, hand, true);
+	}
+
+	public static boolean interactBlock(BlockHitResult blockHitResult, InteractionHand hand, boolean swing) {
+		if (blockHitResult == null || hand == null || MC.player == null || MC.level == null || MC.gameMode == null) {
+			return false;
+		}
+
 		ItemStack heldItem = MC.player.getItemInHand(hand);
 		SwingAnimation swingAnimation = heldItem.getInteractAnimation();
 		int oldCount = heldItem.getCount();
@@ -133,7 +177,9 @@ public class InteractionUtils {
 		if (result.consumesAction()) {
 			if (result instanceof InteractionResult.Success success
 					&& success.swingSource() == InteractionResult.SwingSource.PREDICTED) {
-				MC.player.swing(hand, swingAnimation, false);
+				if (swing) {
+					MC.player.swing(hand, swingAnimation, false);
+				}
 				if (!heldItem.isEmpty() && (heldItem.getCount() != oldCount || MC.player.hasInfiniteMaterials()))
 					MC.player.itemUsed(hand);
 			}
@@ -148,6 +194,10 @@ public class InteractionUtils {
 	 * @param entity Entity to attack.
 	 */
 	public static void attack(Entity entity) {
+		if (entity == null || MC.player == null || MC.level == null || MC.gameMode == null) {
+			return;
+		}
+
 		// Fire onAttackStart event to simulate player attacking normally.
 		// Allows us to inject actions between hits such as criticals, or shield
 		// breaker.
@@ -160,10 +210,16 @@ public class InteractionUtils {
 
 		MC.gameMode.attack(MC.player, entity);
 		MC.player.swing(InteractionHand.MAIN_HAND, MC.player.getMainHandItem().getAttackAnimation(), false);
-		MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
+		if (MC.player.connection != null) {
+			MC.player.connection.send(ServerboundPunchPacket.INSTANCE);
+		}
 	}
 
 	public static Direction getPlaceSide(BlockPos blockPos) {
+		if (blockPos == null || MC.player == null || MC.level == null) {
+			return null;
+		}
+
 		Vec3 lookVec = Vec3.atCenterOf(blockPos).subtract(MC.player.getEyePosition());
 		double bestRelevancy = -Double.MAX_VALUE;
 		Direction bestSide = null;
@@ -172,7 +228,8 @@ public class InteractionUtils {
 			BlockPos neighborPos = blockPos.relative(side);
 			BlockState blockState = MC.level.getBlockState(neighborPos);
 
-			if (blockState.isAir() || !blockState.getFluidState().isEmpty())
+			if (blockState.isAir() || !blockState.getFluidState().isEmpty() || blockState.canBeReplaced()
+					|| blockState.getCollisionShape(MC.level, neighborPos).isEmpty())
 				continue;
 
 			AxisDirection direction = side.getAxisDirection();
