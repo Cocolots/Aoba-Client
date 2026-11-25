@@ -142,6 +142,7 @@ public class ModuleManager implements KeyDownListener, KeyUpListener {
 	public Glide glide = new Glide();
 	public GuiMove guimove = new GuiMove();
 	public HighJump higherjump = new HighJump();
+	public Highway highway = new Highway();
 	public Jesus jesus = new Jesus();
 	public Jetpack jetpack = new Jetpack();
 	public KnockbackDisplacer knockbackDisplacer = new KnockbackDisplacer();
