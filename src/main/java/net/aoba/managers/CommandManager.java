@@ -8,10 +8,6 @@
 
 package net.aoba.managers;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +15,11 @@ import com.mojang.logging.LogUtils;
 
 import net.aoba.api.IAddon;
 import net.aoba.command.Command;
+import net.aoba.command.CommandHistory;
+import net.aoba.command.CommandParseException;
+import net.aoba.command.CommandRegistry;
+import net.aoba.command.CommandSuggester;
+import net.aoba.command.CommandTokenizer;
 import net.aoba.command.InvalidSyntaxException;
 import net.aoba.command.commands.*;
 import net.aoba.settings.types.StringSetting;
@@ -27,13 +28,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 public class CommandManager {
-	private final Map<String, Command> commands = new HashMap<>();
-	private final List<String> commandHistory = new ArrayList<>();
+	private static final int HISTORY_LIMIT = 100;
+	private final CommandRegistry registry = new CommandRegistry();
+	private final CommandHistory commandHistory = new CommandHistory(HISTORY_LIMIT);
 
 	public static StringSetting PREFIX = StringSetting.builder().id("aoba_prefix").displayName("Prefix")
 			.defaultValue(".aoba").build();
 
-	// Commands
 	public final CmdAimbot aimbot = new CmdAimbot();
 	public final CmdAutoEat autoeat = new CmdAutoEat();
 	public final CmdChestESP chestesp = new CmdChestESP();
@@ -66,81 +67,118 @@ public class CommandManager {
 
 	public CommandManager(List<IAddon> addons) {
 		SettingManager.registerSetting(PREFIX);
+		registerDefaults();
 
-		for (Field field : getClass().getDeclaredFields()) {
-			if (Command.class.isAssignableFrom(field.getType())) {
-				try {
-					Command cmd = (Command) field.get(this);
-					commands.put(cmd.getName(), cmd);
-				} catch (IllegalAccessException e) {
-					LogUtils.getLogger().error("Error initializing Aoba commands: " + e.getMessage());
+		if (addons == null) {
+			return;
+		}
+		for (IAddon addon : addons) {
+			if (addon == null || addon.commands() == null) {
+				continue;
+			}
+			for (Command command : addon.commands()) {
+				if (command == null) {
+					continue;
+				}
+				if (!registry.registerIfAbsent(command)) {
+					LogUtils.getLogger().warn("Duplicate addon command '{}'; registration skipped", command.getName());
 				}
 			}
 		}
-
-		addons.forEach(addon -> addon.commands().forEach(command -> {
-			if (!commands.containsKey(command.getName())) {
-				commands.put(command.getName(), command);
-			} else {
-				LogUtils.getLogger().warn("Warning: Duplicate command name \"" + command.getName()
-						+ "\" from addon. This command will not be registered.");
-			}
-		}));
 	}
 
-	/** Gets the command object from a syntax. */
-	public Command getCommandBySyntax(String syntax) {
-		return commands.get(syntax);
-	}
-
-	/**
-	 * Gets all of the Commands currently registered, including ones registered by
-	 * addons.
-	 */
-	public Map<String, Command> getCommands() {
-		return commands;
-	}
-
-	/**
-	 * Gets the total number of registered Commands, including ones registered by
-	 * addons
-	 */
-	public int getNumOfCommands() {
-		return commands.size();
-	}
-
-	/** Runs a command. */
-	public void command(String[] commandIn) {
-		try {
-			commandHistory.add(String.join(" ", commandIn));
-
-			Command command = commands.get(commandIn[1]);
-			if (command == null) {
-				sendChatMessage("Invalid Command! Type " + ChatFormatting.LIGHT_PURPLE + ".aoba help" + ChatFormatting.RESET
-						+ " for a list of commands.");
-			} else {
-				String[] parameterList = Arrays.copyOfRange(commandIn, 2, commandIn.length);
-				command.runCommand(parameterList);
-			}
-		} catch (ArrayIndexOutOfBoundsException e) {
-			sendChatMessage("Invalid Command! Type " + ChatFormatting.LIGHT_PURPLE + ".aoba help" + ChatFormatting.RESET
-					+ " for a list of commands.");
-		} catch (InvalidSyntaxException e) {
-			e.PrintToChat();
+	private void registerDefaults() {
+		List<Command> defaults = List.of(aimbot, autoeat, chestesp, clickgui, entityesp, fastbreak, fly, freecam, font,
+				fullbright, help, hud, itemesp, noclip, nofall, noslowdown, nuker, pov, reach, spam, sprint, step,
+				tilebreaker, timer, tp, tracer, xray, history, discord);
+		for (Command command : defaults) {
+			registry.register(command);
 		}
 	}
 
-	/** Returns the command history. */
-	public List<String> getCommandHistory() {
-		return commandHistory;
+	public void registerCommand(Command command, String... aliases) {
+		registry.register(command, aliases);
 	}
 
-	/** Prints a message into the Minecraft Chat. */
+	public Command getCommandBySyntax(String syntax) {
+		return registry.find(syntax).orElse(null);
+	}
+
+	public Map<String, Command> getCommands() {
+		return registry.getCommands();
+	}
+
+	public int getNumOfCommands() {
+		return registry.size();
+	}
+
+	public void command(String[] commandIn) {
+		if (commandIn == null || commandIn.length == 0) {
+			sendInvalidCommandMessage();
+			return;
+		}
+		dispatch(String.join(" ", commandIn));
+	}
+
+	public boolean dispatch(String input) {
+		var bodyOptional = CommandTokenizer.removePrefix(input, PREFIX.getValue());
+		if (bodyOptional.isEmpty()) {
+			return false;
+		}
+		commandHistory.add(input);
+
+		List<String> tokens;
+		try {
+			tokens = CommandTokenizer.tokenize(bodyOptional.get());
+		} catch (CommandParseException e) {
+			sendChatMessage("Command parse error: " + e.getMessage());
+			return true;
+		}
+		if (tokens.isEmpty()) {
+			sendInvalidCommandMessage();
+			return true;
+		}
+
+		Command command = getCommandBySyntax(tokens.get(0));
+		if (command == null) {
+			sendInvalidCommandMessage();
+			return true;
+		}
+
+		try {
+			command.runCommand(tokens.subList(1, tokens.size()).toArray(String[]::new));
+		} catch (InvalidSyntaxException e) {
+			e.PrintToChat();
+		} catch (RuntimeException e) {
+			LogUtils.getLogger().error("Command '{}' failed", command.getName(), e);
+			sendChatMessage("Command failed: " + e.getMessage());
+		}
+		return true;
+	}
+
+	public CommandSuggester.Result suggest(String input, int cursor) {
+		return CommandSuggester.suggest(input, cursor, PREFIX.getValue(), registry);
+	}
+
+	public List<String> getCommandHistory() {
+		return commandHistory.getEntries();
+	}
+
+	public void clearCommandHistory() {
+		commandHistory.clear();
+	}
+
+	private void sendInvalidCommandMessage() {
+		sendChatMessage("Invalid Command! Type " + ChatFormatting.LIGHT_PURPLE + PREFIX.getValue() + " help"
+				+ ChatFormatting.RESET + " for a list of commands.");
+	}
+
 	public static void sendChatMessage(String message) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.gui != null) {
-			mc.gui.hud.getChat().addClientSystemMessage(Component.nullToEmpty(ChatFormatting.DARK_PURPLE + "[" + ChatFormatting.LIGHT_PURPLE + "Aoba"
-					+ ChatFormatting.DARK_PURPLE + "] " + ChatFormatting.RESET + message));
+		if (mc != null && mc.gui != null && mc.gui.hud != null) {
+			mc.gui.hud.getChat().addClientSystemMessage(Component.nullToEmpty(ChatFormatting.DARK_PURPLE + "["
+					+ ChatFormatting.LIGHT_PURPLE + "Aoba" + ChatFormatting.DARK_PURPLE + "] "
+					+ ChatFormatting.RESET + message));
 		}
 	}
 }
