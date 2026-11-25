@@ -83,9 +83,10 @@ public abstract class Setting<T> {
 		if (Objects.equals(this.value, value))
 			return;
 
-		if (isValueValid(value)) {
-			this.value = value;
-		}
+		if (!isValueValid(value))
+			return;
+
+		this.value = value;
 		update();
 	}
 
@@ -94,7 +95,6 @@ public abstract class Setting<T> {
 	 */
 	public void resetToDefault() {
 		resetValue();
-		update();
 	}
 
 	/**

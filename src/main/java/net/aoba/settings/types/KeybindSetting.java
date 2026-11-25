@@ -23,7 +23,7 @@ public class KeybindSetting extends Setting<Keybind> {
      */
     @Override
     protected boolean isValueValid(Keybind value) {
-        return true;
+        return value != null && value.getKey() != null;
     }
     
     public static KeybindSetting.BUILDER builder() {
@@ -31,15 +31,19 @@ public class KeybindSetting extends Setting<Keybind> {
     }
     
     public static class BUILDER extends Setting.BUILDER<KeybindSetting.BUILDER, KeybindSetting, Keybind> {
+		private Boolean momentary;
+
 		protected BUILDER() {
         }
 
 		@Override
 		public KeybindSetting build() {
-			return new KeybindSetting(id, displayName, description, defaultValue, onUpdate);
+			Keybind bind = momentary == null ? defaultValue : new Keybind(defaultValue.getKey(), momentary);
+			return new KeybindSetting(id, displayName, description, bind, onUpdate);
 		}
 		
 		public KeybindSetting.BUILDER setMomentary(boolean value) {
+			momentary = value;
 			return this;
 		}
 	}

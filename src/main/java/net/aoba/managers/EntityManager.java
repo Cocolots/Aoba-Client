@@ -41,7 +41,7 @@ public class EntityManager implements TickListener
     }
 
     private void update() {
-        if (MC.level != null)
+        if (MC.level != null && MC.player != null)
         {
             setLists(
                     new ArrayList<>(getEntities(false)),
@@ -101,6 +101,10 @@ public class EntityManager implements TickListener
         {
             return entities;
         }
+        if (MC.level == null)
+        {
+            return Collections.emptyList();
+        }
         List<Entity> entityList = new ArrayList<>();
         MC.level.entitiesForRendering().forEach(entityList::add);
         return entityList;
@@ -108,7 +112,11 @@ public class EntityManager implements TickListener
 
     public List<Player> getPlayers(boolean async)
     {
-        return async ? players : new ArrayList<>(MC.level.players());
+        if (async)
+        {
+            return players;
+        }
+        return MC.level == null ? Collections.emptyList() : new ArrayList<>(MC.level.players());
     }
 
     public List<BlockEntity> getBlockEntities(boolean async)
@@ -116,6 +124,10 @@ public class EntityManager implements TickListener
         if (async)
         {
             return blockEntities;
+        }
+        if (MC.level == null || MC.player == null)
+        {
+            return Collections.emptyList();
         }
 
         List<BlockEntity> list = new ArrayList<>();

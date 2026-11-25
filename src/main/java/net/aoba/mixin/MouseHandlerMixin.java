@@ -48,7 +48,7 @@ public class MouseHandlerMixin {
 			MouseClickEvent event = new MouseClickEvent(xpos, ypos, button, action, mods);
 			aoba.eventManager.Fire(event);
 
-			if (aoba.guiManager.isClickGuiOpen()) {
+			if (event.isCancelled() || (aoba.guiManager != null && aoba.guiManager.isClickGuiOpen())) {
 				ci.cancel();
 			}
 		}

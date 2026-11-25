@@ -1,0 +1,16 @@
+{
+	"schemaVersion": 1,
+	"id": "aoba-gametest",
+	"version": "1.0.0",
+	"name": "Aoba Client Game Tests",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"net.aoba.gametest.AobaClientGameTest"
+		]
+	},
+	"depends": {
+		"aoba": "*",
+		"fabric-client-gametest-api-v1": "*"
+	}
+}

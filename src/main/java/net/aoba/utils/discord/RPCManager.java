@@ -8,7 +8,8 @@
 
 package net.aoba.utils.discord;
 
-import net.aoba.AobaClient;
+import com.mojang.logging.LogUtils;
+
 import net.aoba.gui.screens.*;
 import net.aoba.gui.screens.alts.AddAltScreen;
 import net.aoba.gui.screens.alts.AltScreen;
@@ -28,67 +29,103 @@ import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import static net.aoba.AobaClient.MC;
 
 public class RPCManager {
-    public static boolean started;
-    private static final Discord rpc = Discord.INSTANCE;
+    public static volatile boolean started;
     public static DiscordRPC presence = new DiscordRPC();
+
+    private static Discord rpc;
     private static Thread thread;
 
-    public void startRpc() {
-        if (!started) {
-            started = true;
-            DiscordEventHandlers handlers = new DiscordEventHandlers();
-            rpc.Discord_Initialize("1497026345862168646", handlers, true, "");
-            presence.startTimestamp = (System.currentTimeMillis() / 1000L);
-            presence.largeImageText = "";
-            rpc.Discord_UpdatePresence(presence);
-
-            thread = new Thread(() -> {
-                while (!Thread.currentThread().isInterrupted()) {
-                    rpc.Discord_RunCallbacks();
-
-                    presence.details = getDetails();
-
-                    presence.state = "MC 26.3";
-
-                    presence.smallImageText = "logged as - " + MC.getUser().getName();
-                    presence.smallImageKey = "https://minotar.net/helm/" + MC.getUser().getName() + "/100.png";
-
-
-                    presence.button_label_1 = "Download";
-                    presence.button_url_1 = "https://github.com/coltonk9043/Aoba-MC-Hacked-Client";
-
-                    presence.largeImageKey = "https://i.imgur.com/D64DjG2.png";
-
-                    rpc.Discord_UpdatePresence(presence);
-                    try {
-                        Thread.sleep(2000L);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            }, "TH-RPC-Handler");
-            
-            thread.start();
-        }
-    }
-
-    /*
-     Stops the Discord Rich Presence (RPC).
-     */
-    public void stopRpc() {
-        if (started) {
-            started = false;
-
-            if (thread != null && thread.isAlive()) {
-                thread.interrupt();
+    public boolean startRpc() {
+        synchronized (RPCManager.class) {
+            if (started) {
+                return true;
+            }
+            if (!isNativeLibrarySupported(System.getProperty("os.name", ""),
+                    System.getProperty("os.arch", ""))) {
+                LogUtils.getLogger().warn("Discord RPC is unavailable on this platform architecture");
+                return false;
             }
 
-            rpc.Discord_Shutdown();
+            try {
+                Discord discord = Discord.INSTANCE;
+                DiscordEventHandlers handlers = new DiscordEventHandlers();
+                discord.Discord_Initialize("1497026345862168646", handlers, true, "");
+                presence.startTimestamp = System.currentTimeMillis() / 1000L;
+                presence.largeImageText = "";
+                discord.Discord_UpdatePresence(presence);
 
-            thread = null;
+                rpc = discord;
+                started = true;
+                thread = new Thread(() -> runCallbacks(discord), "Aoba-Discord-RPC");
+                thread.setDaemon(true);
+                thread.start();
+                return true;
+            } catch (LinkageError | RuntimeException e) {
+                started = false;
+                rpc = null;
+                thread = null;
+                LogUtils.getLogger().error("Discord RPC native integration could not be started", e);
+                return false;
+            }
         }
     }
 
-    private String getDetails() {
+    private static void runCallbacks(Discord discord) {
+        try {
+            while (started && !Thread.currentThread().isInterrupted()) {
+                synchronized (RPCManager.class) {
+                    if (!started) {
+                        break;
+                    }
+                    discord.Discord_RunCallbacks();
+                    presence.details = getDetails();
+                    presence.state = "MC 26.3";
+                    presence.smallImageText = "logged as - " + MC.getUser().getName();
+                    presence.smallImageKey = "https://minotar.net/helm/" + MC.getUser().getName() + "/100.png";
+                    presence.button_label_1 = "Download";
+                    presence.button_url_1 = "https://github.com/Cocolots/Aoba-Client";
+                    presence.largeImageKey = "https://i.imgur.com/D64DjG2.png";
+                    discord.Discord_UpdatePresence(presence);
+                }
+                Thread.sleep(2000L);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (LinkageError | RuntimeException e) {
+            LogUtils.getLogger().error("Discord RPC callback loop stopped", e);
+        } finally {
+            started = false;
+        }
+    }
+
+    public void stopRpc() {
+        synchronized (RPCManager.class) {
+            started = false;
+            Discord discord = rpc;
+            rpc = null;
+
+            if (thread != null) {
+                thread.interrupt();
+                thread = null;
+            }
+
+            if (discord != null) {
+                try {
+                    discord.Discord_Shutdown();
+                } catch (LinkageError | RuntimeException e) {
+                    LogUtils.getLogger().error("Discord RPC native integration could not be shut down", e);
+                }
+            }
+        }
+    }
+
+    static boolean isNativeLibrarySupported(String osName, String osArch) {
+        String os = osName.toLowerCase();
+        String arch = osArch.toLowerCase();
+        return !os.contains("mac") || (!arch.equals("aarch64") && !arch.equals("arm64") && !arch.equals("arm"));
+    }
+
+    private static String getDetails() {
         String result = "";
 
         if (MC.gui.screen() instanceof TitleScreen || MC.gui.screen() instanceof MainMenuScreen) {

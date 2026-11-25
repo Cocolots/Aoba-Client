@@ -14,8 +14,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import net.aoba.Aoba;
 import net.aoba.AobaClient;
 import net.aoba.interfaces.IMultiPlayerGameMode;
@@ -172,7 +175,7 @@ public abstract class Module {
 	 * @return A {@link List} of {@link Setting} objects that belong to this module.
 	 */
 	public List<Setting<?>> getSettings() {
-		return settings;
+		return Collections.unmodifiableList(settings);
 	}
 
 	/**
@@ -362,6 +365,10 @@ public abstract class Module {
 	}
 
 	public static FindItemResult findInHotbar(Predicate<ItemStack> isGood) {
+		if (MC == null || MC.player == null) {
+			return new FindItemResult(-1, 0);
+		}
+
 		if (testInOffHand(isGood)) {
 			return new FindItemResult(45, MC.player.getOffhandItem().getCount());
 		}
@@ -375,29 +382,36 @@ public abstract class Module {
 	}
 
 	public static FindItemResult find(Predicate<ItemStack> isGood) {
-		if (MC.player == null) {
-			return new FindItemResult(0, 0);
+		if (MC == null || MC.player == null) {
+			return new FindItemResult(-1, 0);
 		}
 
-		return find(isGood, 0, MC.player.getInventory().getContainerSize());
+		return find(isGood, 0, MC.player.getInventory().getContainerSize() - 1);
 	}
 
 	public static FindItemResult find(Predicate<ItemStack> isGood, int start, int end) {
-		if (MC.player == null) {
-			return new FindItemResult(0, 0);
+		if (MC == null || MC.player == null) {
+			return new FindItemResult(-1, 0);
 		}
 
+		return findInSlots(MC.player.getInventory().getContainerSize(), start, end,
+				MC.player.getInventory()::getItem, isGood, ItemStack::getCount);
+	}
+
+	static <T> FindItemResult findInSlots(int containerSize, int start, int end, IntFunction<T> slotGetter,
+			Predicate<T> isGood, ToIntFunction<T> countFunction) {
 		int slot = -1;
 		int count = 0;
+		int firstSlot = Math.max(0, start);
+		int lastSlot = Math.min(end, containerSize - 1);
 
-		for (int i = start; i <= end; i++) {
-			ItemStack stack = MC.player.getInventory().getItem(i);
-
+		for (int i = firstSlot; i <= lastSlot; i++) {
+			T stack = slotGetter.apply(i);
 			if (isGood.test(stack)) {
 				if (slot == -1) {
 					slot = i;
 				}
-				count += stack.getCount();
+				count += countFunction.applyAsInt(stack);
 			}
 		}
 
@@ -405,6 +419,10 @@ public abstract class Module {
 	}
 
 	public static FindItemResult findFastestTool(BlockState state) {
+		if (MC == null || MC.player == null || state == null) {
+			return new FindItemResult(-1, 0);
+		}
+
 		float bestScore = 1;
 		int slot = -1;
 
@@ -425,14 +443,18 @@ public abstract class Module {
 	}
 
 	public static boolean testInMainHand(Predicate<ItemStack> predicate) {
-		return predicate.test(MC.player.getMainHandItem());
+		return MC != null && MC.player != null && predicate.test(MC.player.getMainHandItem());
 	}
 
 	public static boolean testInOffHand(Predicate<ItemStack> predicate) {
-		return predicate.test(MC.player.getOffhandItem());
+		return MC != null && MC.player != null && predicate.test(MC.player.getOffhandItem());
 	}
 
 	public static boolean swap(int slot, boolean swapBack) {
+		if (MC == null || MC.player == null || MC.gameMode == null) {
+			return false;
+		}
+
 		if (slot == 45) {
 			return true;
 		}

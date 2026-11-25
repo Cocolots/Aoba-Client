@@ -274,22 +274,17 @@ public class ModuleManager implements KeyDownListener, KeyUpListener {
 
 	@Override
 	public void onKeyUp(KeyUpEvent event) {
-		if (GuiManager.isKeyboardInputActive())
-			return;
 		if (event.GetKey() == InputConstants.UNKNOWN.getValue())
 			return;
 
-		if (MC.gui.screen() == null) {
-			for (Module module : modules) {
-				KeybindSetting setting = module.getBind();
-				Keybind binding = setting.getValue();
-				int keyCode = binding.getKeyCode();
-				if (keyCode == InputConstants.UNKNOWN.getValue())
-					continue;
-				
-				if (binding.getIsMomentary() && keyCode == event.GetKey()) {
-					module.disable();
-				}
+		releaseMomentaryModules(modules, event.GetKey());
+	}
+
+	static void releaseMomentaryModules(Iterable<Module> modules, int releasedKey) {
+		for (Module module : modules) {
+			Keybind binding = module.getBind().getValue();
+			if (binding.getIsMomentary() && binding.getKeyCode() == releasedKey) {
+				module.disable();
 			}
 		}
 	}
