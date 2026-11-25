@@ -30,7 +30,7 @@ public class Speed extends Module implements TickListener {
 		setDescription("Modifies the Movement-Speed of the Player");
 
 		speedSetting.addOnUpdate((i) -> {
-			if (state.getValue()) {
+			if (state.getValue() && MC != null && MC.player != null) {
 				AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
 				attribute.setBaseValue(speedSetting.getValue());
 			}
@@ -52,19 +52,25 @@ public class Speed extends Module implements TickListener {
 
 	@Override
 	public void onDisable() {
-		MC.options.fovEffectScale().set(Math.min(1.0, Math.max(0.0, 1.0)));
-		if (MC.player != null) {
-			AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
-			attribute.setBaseValue(0.1);
+		if (MC != null) {
+			MC.options.fovEffectScale().set(Math.min(1.0, Math.max(0.0, 1.0)));
+			if (MC.player != null) {
+				AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
+				attribute.setBaseValue(0.1);
+			}
 		}
 		Aoba.getInstance().eventManager.RemoveListener(TickListener.class, this);
 	}
 
 	@Override
 	public void onEnable() {
-		MC.options.fovEffectScale().set(Math.min(1.0, Math.max(0.0, 0.0)));
-		AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
-		attribute.setBaseValue(speedSetting.getValue());
+		if (MC != null) {
+			MC.options.fovEffectScale().set(Math.min(1.0, Math.max(0.0, 0.0)));
+			if (MC.player != null) {
+				AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
+				attribute.setBaseValue(speedSetting.getValue());
+			}
+		}
 		Aoba.getInstance().eventManager.AddListener(TickListener.class, this);
 	}
 
@@ -75,8 +81,10 @@ public class Speed extends Module implements TickListener {
 
 	@Override
 	public void onTick(Pre event) {
-		AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
-		attribute.setBaseValue(speedSetting.getValue());
+		if (MC != null && MC.player != null) {
+			AttributeInstance attribute = MC.player.getAttribute(Attributes.MOVEMENT_SPEED);
+			attribute.setBaseValue(speedSetting.getValue());
+		}
 	}
 
 	@Override

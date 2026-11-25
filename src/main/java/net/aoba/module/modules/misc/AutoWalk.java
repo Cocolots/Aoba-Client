@@ -17,6 +17,8 @@ import net.aoba.module.Module;
 import net.aoba.settings.types.BooleanSetting;
 
 public class AutoWalk extends Module implements TickListener {
+	private boolean previousKeyUp;
+
 	private final BooleanSetting automaticJump = BooleanSetting.builder().id("autowalk_automatic_jump")
 			.displayName("Automatically Jump").description("Automatically jumps when you hit a wall.")
 			.defaultValue(true).build();
@@ -32,12 +34,13 @@ public class AutoWalk extends Module implements TickListener {
 
 	@Override
 	public void onDisable() {
-		MC.options.keyUp.setDown(false);
+		MC.options.keyUp.setDown(previousKeyUp);
 		Aoba.getInstance().eventManager.RemoveListener(TickListener.class, this);
 	}
 
 	@Override
 	public void onEnable() {
+		previousKeyUp = MC.options.keyUp.isDown();
 		Aoba.getInstance().eventManager.AddListener(TickListener.class, this);
 	}
 
@@ -48,9 +51,15 @@ public class AutoWalk extends Module implements TickListener {
 
 	@Override
 	public void onTick(Pre event) {
+		if (MC.player == null || MC.level == null) {
+			MC.options.keyUp.setDown(false);
+			return;
+		}
+
 		MC.options.keyUp.setDown(true);
-		if (MC.player.horizontalCollision && MC.player.onGround())
+		if (automaticJump.getValue() && MC.player.horizontalCollision && MC.player.onGround()) {
 			MC.player.jumpFromGround();
+		}
 	}
 
 	@Override
