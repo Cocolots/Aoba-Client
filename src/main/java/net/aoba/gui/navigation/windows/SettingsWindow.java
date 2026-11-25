@@ -60,8 +60,12 @@ public class SettingsWindow extends Window {
 
 		configNames = new ComboBoxComponent();
 		configNames.setProperty(ComboBoxComponent.ItemsSourceProperty, SettingManager.configNames);
-		if (!SettingManager.configNames.isEmpty())
-			configNames.setProperty(ComboBoxComponent.SelectedItemProperty, SettingManager.configNames.get(0));
+		if (!SettingManager.configNames.isEmpty()) {
+			String currentConfig = SettingManager.getCurrentConfig();
+			String selectedConfig = SettingManager.configNames.contains(currentConfig) ? currentConfig
+					: SettingManager.configNames.get(0);
+			configNames.setProperty(ComboBoxComponent.SelectedItemProperty, selectedConfig);
+		}
 		loadConfigGrid.addChild(configNames);
 
 		// Load Config Button

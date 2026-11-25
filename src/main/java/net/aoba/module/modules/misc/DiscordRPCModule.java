@@ -31,7 +31,9 @@ public class DiscordRPCModule extends Module {
     @Override
     public void onEnable() {
         RPCManager rpcManager = new RPCManager();
-        rpcManager.startRpc();
+        if (!rpcManager.startRpc()) {
+            sendChatMessage("Discord RPC is unavailable on this system; the game will continue normally.");
+        }
         // Turns the Discord RPC On
     }
 

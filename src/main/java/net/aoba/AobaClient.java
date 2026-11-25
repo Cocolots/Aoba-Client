@@ -23,7 +23,9 @@ package net.aoba;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import net.aoba.api.IAddon;
 import net.aoba.gui.GuiManager;
@@ -77,6 +79,8 @@ public class AobaClient {
 	public Renderer2D render2D;
 	public Renderer3D render3D;
 	public Compositor compositor;
+	private final AtomicBoolean persistentDataSaved = new AtomicBoolean();
+	private final AtomicBoolean rendererResourcesClosed = new AtomicBoolean();
 
 	public static List<IAddon> addons = new ArrayList<>();
 	public static Logger LOGGER;
@@ -181,24 +185,28 @@ public class AobaClient {
 	 * Called when the client is shutting down. Saves persistent data.
 	 */
 	public void endClient() {
-		LOGGER.info("[Aoba] Shutting down");
-		try {
-			SettingManager.saveSettings();
-			altManager.saveAlts();
-			friendsList.save();
-			macroManager.save();
-			moduleManager.modules.forEach(Module::onDisable);
-		} catch (Exception e) {
-			LOGGER.error("[Aoba] Error saving data", e);
+		if (persistentDataSaved.compareAndSet(false, true)) {
+			LOGGER.info("[Aoba] Shutting down");
+			try {
+				SettingManager.saveSettings();
+				altManager.saveAlts();
+				friendsList.save();
+				macroManager.save();
+				moduleManager.modules.forEach(Module::onDisable);
+			} catch (Exception e) {
+				LOGGER.error("[Aoba] Error saving data", e);
+			}
 		}
 
-		try {
-			if (render2D != null) render2D.close();
-			if (render3D != null) render3D.close();
-			if (compositor != null) compositor.close();
-			AbstractRenderer.closeSharedResources();
-		} catch (Exception e) {
-			LOGGER.error("[Aoba] Error releasing renderer resources", e);
+		if (RenderSystem.isOnRenderThread() && rendererResourcesClosed.compareAndSet(false, true)) {
+			try {
+				if (render2D != null) render2D.close();
+				if (render3D != null) render3D.close();
+				if (compositor != null) compositor.close();
+				AbstractRenderer.closeSharedResources();
+			} catch (Exception e) {
+				LOGGER.error("[Aoba] Error releasing renderer resources", e);
+			}
 		}
 	}
 }

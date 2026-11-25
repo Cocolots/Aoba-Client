@@ -32,6 +32,7 @@ bin/
 
 .metadata/
 run/
+logs/
 remappedSrc/
 
 # java

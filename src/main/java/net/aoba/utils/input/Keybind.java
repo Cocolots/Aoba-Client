@@ -54,4 +54,20 @@ public class Keybind {
 		Key key = InputConstants.Type.KEYBOARD.getOrCreate(keyCode);
 		return new Keybind(key, momentary);
 	}
+
+	@Override
+	public boolean equals(Object other) {
+		return this == other || other instanceof Keybind keybind && getKeyCode() == keybind.getKeyCode()
+				&& isMomentary == keybind.isMomentary;
+	}
+
+	@Override
+	public int hashCode() {
+		return 31 * getKeyCode() + Boolean.hashCode(isMomentary);
+	}
+
+	@Override
+	public String toString() {
+		return key.getName() + (isMomentary ? " (hold)" : "");
+	}
 }

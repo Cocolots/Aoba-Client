@@ -4,8 +4,8 @@
   <tr>
     <th><a href="#server-invite">Discord</a></th>
     <td>
-      <a target="_blank" href="https://discord.gg/krV9VrCMVm">
-        <img src="https://dcbadge.limes.pink/api/server/krV9VrCMVm" alt="Discord Server Badge" />
+      <a target="_blank" href="https://discord.gg/CDa4etPFtk">
+        <img src="https://dcbadge.limes.pink/api/server/CDa4etPFtk" alt="Discord Server Badge" />
       </a>
     </td>
   </tr>
