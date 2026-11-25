@@ -8,11 +8,13 @@
 
 package net.aoba.gui.navigation.windows;
 
+import java.io.IOException;
 import java.util.List;
 
 import net.aoba.Aoba;
 import net.aoba.gui.GuiManager;
 import net.aoba.gui.UIElement;
+import net.aoba.gui.components.ButtonComponent;
 import net.aoba.gui.components.CheckboxComponent;
 import net.aoba.gui.components.ComboBoxComponent;
 import net.aoba.gui.components.ExpanderComponent;
@@ -22,6 +24,7 @@ import net.aoba.gui.components.ShaderComponent;
 import net.aoba.gui.components.SliderComponent;
 import net.aoba.gui.components.StackPanelComponent;
 import net.aoba.gui.components.StringComponent;
+import net.aoba.gui.components.TextBoxComponent;
 import net.aoba.gui.font.FontManager;
 import net.aoba.gui.navigation.Window;
 import net.aoba.gui.themes.GuiThemes;
@@ -56,6 +59,26 @@ public class UIOptionsWindow extends Window {
 		StringComponent themeNote = new StringComponent("Fonts and keybinds are preserved.");
 		themeNote.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundAccentColor);
 		stackPanel.addChild(themeNote);
+
+		TextBoxComponent themeNameInput = new TextBoxComponent();
+		themeNameInput.setProperty(TextBoxComponent.PlaceholderText, "New theme name...");
+		StringComponent themeStatus = new StringComponent("Themes are stored in .minecraft/aoba/themes.");
+		themeStatus.bindProperty(UIElement.ForegroundProperty, GuiManager.foregroundAccentColor);
+		ButtonComponent saveThemeButton = new ButtonComponent(() -> {
+			try {
+				ThemePreset savedTheme = GuiThemes.saveCurrent(themeNameInput.getProperty(TextBoxComponent.TextProperty));
+				themeCombo.setProperty(ComboBoxComponent.ItemsSourceProperty, GuiThemes.themes());
+				themeCombo.setProperty(ComboBoxComponent.SelectedItemProperty, savedTheme);
+				themeNameInput.setProperty(TextBoxComponent.TextProperty, "");
+				themeStatus.setProperty(StringComponent.TextProperty, "Saved " + savedTheme.displayName() + ".");
+			} catch (IOException | IllegalArgumentException e) {
+				themeStatus.setProperty(StringComponent.TextProperty, "Could not save theme: " + e.getMessage());
+			}
+		});
+		saveThemeButton.setContent(new StringComponent("Save Current Theme"));
+		stackPanel.addChild(themeNameInput);
+		stackPanel.addChild(saveThemeButton);
+		stackPanel.addChild(themeStatus);
 
 		// Font
 		stackPanel.addChild(createHeader("HUD Font"));

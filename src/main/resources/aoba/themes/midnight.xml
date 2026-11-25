@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties version="1.0">
+  <comment>Aoba UI theme</comment>
+  <entry key="theme.id">midnight</entry>
+  <entry key="theme.name">Midnight Blue</entry>
+  <entry key="hud_rounding_radius">8</entry>
+  <entry key="ui_line_thickness">1</entry>
+  <entry key="ui_foreground_color">solid,0.901960784,0.933333333,0.97254902,1</entry>
+  <entry key="ui_header_foreground_color">solid,0.368627451,0.823529412,1,1</entry>
+  <entry key="ui_accent_foreground_color">solid,0.580392157,0.639215686,0.721568627,1</entry>
+  <entry key="ui_window_border_color">solid,0.0941176471,0.156862745,0.250980392,1</entry>
+  <entry key="ui_panel_border_color">solid,0.196078431,0.294117647,0.411764706,0.705882353</entry>
+  <entry key="ui_component_background_color">solid,0.0666666667,0.109803922,0.176470588,0.862745098</entry>
+  <entry key="ui_component_hover_background_color">solid,0.137254902,0.215686275,0.31372549,0.901960784</entry>
+  <entry key="ui_component_border_color">solid,0.294117647,0.431372549,0.568627451,0.862745098</entry>
+  <entry key="ui_window_background_color">blur,0,0,0,0.031372549,0.0588235294,0.109803922,0.960784314,50,5</entry>
+  <entry key="ui_panel_background_color">solid,0.0862745098,0.137254902,0.215686275,0.705882353</entry>
+  <entry key="ui_button_background_color">gradient,0.0980392157,0.462745098,0.823529412,1,0.0784313725,0.294117647,0.588235294,1,90</entry>
+  <entry key="ui_button_hover_background_color">gradient,0.176470588,0.607843137,0.941176471,1,0.0980392157,0.392156863,0.725490196,1,90</entry>
+  <entry key="ui_button_pressed_background_color">gradient,0.0588235294,0.333333333,0.62745098,1,0.0392156863,0.215686275,0.431372549,1,90</entry>
+  <entry key="ui_button_border_color">gradient,0.333333333,0.745098039,1,1,0.137254902,0.450980392,0.803921569,1,90</entry>
+</properties>

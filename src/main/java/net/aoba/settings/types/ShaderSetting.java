@@ -39,6 +39,36 @@ public class ShaderSetting extends Setting<Shader> {
         }
     }
 
+    public String getSerializedValue() {
+        StringBuilder serialized = new StringBuilder(getShaderId());
+        Shader shader = getValue();
+        if (shader != null) {
+            for (float value : shader.uniformValues()) {
+                serialized.append(",").append(value);
+            }
+        }
+        return serialized.toString();
+    }
+
+    public void setSerializedValue(String value) {
+        String[] parts = value.split(",");
+        if (parts.length == 0)
+            return;
+
+        setShaderId(parts[0]);
+        Shader shader = getValue();
+        if (shader != null && parts.length > 1) {
+            float[] uniforms = shader.uniformValues();
+            for (int i = 0; i < Math.min(parts.length - 1, uniforms.length); i++) {
+                try {
+                    uniforms[i] = Float.parseFloat(parts[i + 1]);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            update();
+        }
+    }
+
     public static ShaderSetting.BUILDER builder() {
     	return new ShaderSetting.BUILDER();
     }

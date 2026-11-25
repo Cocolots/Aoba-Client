@@ -215,6 +215,7 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	public InputHud inputHud;
 
 	public GuiManager() {
+		GuiThemes.initialize(MC.gameDirectory.toPath());
 		clickGuiTabControl = new TabComponent();
 
 		SettingManager.registerGlobalSetting(enableCustomTitle);

@@ -3,11 +3,22 @@ package net.aoba.gui.themes;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class GuiThemesTest {
+	@TempDir
+	Path tempDirectory;
+
+	@BeforeEach
+	void initializeThemes() {
+		GuiThemes.initialize(tempDirectory);
+	}
+
 	@Test
 	void catalogHasUniqueIdsAndDisplayNames() {
 		assertThat(GuiThemes.themes().stream().map(ThemePreset::id)).doesNotHaveDuplicates();
@@ -42,6 +53,13 @@ class GuiThemesTest {
 	@Test
 	void presetDisplayTextIsUsedByComboBoxes() {
 		List<String> labels = GuiThemes.themes().stream().map(Object::toString).toList();
-		assertThat(labels).containsExactly("Aoba Purple", "Midnight Blue", "Daylight", "High Contrast");
+		assertThat(labels).containsExactlyInAnyOrder("Aoba Purple", "Midnight Blue", "Daylight", "High Contrast");
+	}
+
+	@Test
+	void displayNamesBecomeSafeThemeIds() {
+		assertThat(GuiThemes.themeIdForDisplayName("  My Custom Theme!  ")).isEqualTo("my_custom_theme");
+		assertThatThrownBy(() -> GuiThemes.themeIdForDisplayName("!!!"))
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 }
