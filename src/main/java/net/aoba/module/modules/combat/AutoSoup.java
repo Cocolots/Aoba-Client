@@ -8,8 +8,6 @@
 
 package net.aoba.module.modules.combat;
 
-import com.mojang.logging.LogUtils;
-
 import net.aoba.Aoba;
 import net.aoba.event.events.PlayerHealthEvent;
 import net.aoba.event.listeners.PlayerHealthListener;
@@ -57,7 +55,7 @@ public class AutoSoup extends Module implements PlayerHealthListener {
 	public void sortInventory() {
 		for (int i = 0; i < Inventory.getSelectionSize(); i++) {
 			ItemStack stack = MC.player.getInventory().getItem(i);
-			if (stack == null || stack.getItem() == Items.BOWL) {
+			if (stack.isEmpty() || stack.getItem() == Items.BOWL) {
 				int nextSoup = findSoup();
 				if (nextSoup >= 0) {
 					MC.gameMode.handleInventoryButtonClick(0, nextSoup);
@@ -83,19 +81,17 @@ public class AutoSoup extends Module implements PlayerHealthListener {
 
 	@Override
 	public void onHealthChanged(PlayerHealthEvent readPacketEvent) {
-		LogUtils.getLogger().info("autosoup");
 		float playerHealth = readPacketEvent.getHealth();
 
 		// If the players HP is below the given threshold.
 		if (playerHealth < health.getValue()) {
-			LogUtils.getLogger().info("autosoup enabled");
 			// Find the first item in the hotbar that is a Stew item.
 			int foodSlot = -1;
 			for (int i = 0; i < Inventory.getSelectionSize(); i++) {
 				Item item = MC.player.getInventory().getItem(i).getItem();
 
 				// Check if it is Mushroom Soup. TODO: Add component check...
-				if (item == Items.MUSHROOM_STEM) {
+				if (item == Items.MUSHROOM_STEW) {
 					foodSlot = i;
 					break;
 				}

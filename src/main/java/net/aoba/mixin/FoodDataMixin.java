@@ -41,6 +41,9 @@ public class FoodDataMixin {
 					int newFoodLevel = Math.max(foodLevel - 1, 0);
 					FoodLevelEvent event = new FoodLevelEvent(newFoodLevel);
 					Aoba.getInstance().eventManager.Fire(event);
+					if (event.isCancelled()) {
+						ci.cancel();
+					}
 				}
 			}
 		}
@@ -50,5 +53,8 @@ public class FoodDataMixin {
 	private void onSetHunger(int foodLevel, CallbackInfo ci) {
 		FoodLevelEvent event = new FoodLevelEvent(foodLevel);
 		Aoba.getInstance().eventManager.Fire(event);
+		if (event.isCancelled()) {
+			ci.cancel();
+		}
 	}
 }
